@@ -17,13 +17,16 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('HOME');
   
-  // Data State (Editable with Persistence)
+  // Data State (Editable with Persistence) - ROBUST LOADING
   const [professionals, setProfessionals] = useState<Professional[]>(() => {
     try {
       const saved = localStorage.getItem('prospot_professionals');
-      return saved ? JSON.parse(saved) : MOCK_PROFESSIONALS;
+      if (!saved) return MOCK_PROFESSIONALS;
+      const parsed = JSON.parse(saved);
+      // Validation: Must be an array
+      return Array.isArray(parsed) ? parsed : MOCK_PROFESSIONALS;
     } catch (e) {
-      console.error("Error reading from local storage", e);
+      console.error("Error reading professionals from local storage, resetting to defaults", e);
       return MOCK_PROFESSIONALS;
     }
   });
@@ -31,9 +34,12 @@ const App: React.FC = () => {
   const [ads, setAds] = useState<Advertisement[]>(() => {
     try {
       const saved = localStorage.getItem('prospot_ads');
-      return saved ? JSON.parse(saved) : MOCK_ADS;
+      if (!saved) return MOCK_ADS;
+      const parsed = JSON.parse(saved);
+      // Validation: Must be an array
+      return Array.isArray(parsed) ? parsed : MOCK_ADS;
     } catch (e) {
-      console.error("Error reading from local storage", e);
+      console.error("Error reading ads from local storage, resetting to defaults", e);
       return MOCK_ADS;
     }
   });
@@ -64,8 +70,8 @@ const App: React.FC = () => {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   // Filter Ads
-  const feedAds = ads.filter(ad => ad.position === 'feed');
-  const sidebarAds = ads.filter(ad => ad.position === 'sidebar');
+  const feedAds = (ads || []).filter(ad => ad.position === 'feed');
+  const sidebarAds = (ads || []).filter(ad => ad.position === 'sidebar');
 
   // --- CRUD OPERATIONS ---
   const handleAddProfessional = (newPro: Professional) => {
@@ -97,8 +103,10 @@ const App: React.FC = () => {
       setAds(prev => prev.filter(a => a.id !== id));
   };
 
-  // Haversine formula
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  // Haversine formula with safety checks
+  const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
+    if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return Infinity;
+    
     const R = 6371; 
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -140,7 +148,7 @@ const App: React.FC = () => {
 
   // Filter & Sort Logic
   useEffect(() => {
-    let result = professionals;
+    let result = professionals || [];
 
     if (selectedCategory !== Category.ALL) {
       result = result.filter(pro => pro.category === selectedCategory);
@@ -153,14 +161,17 @@ const App: React.FC = () => {
     if (searchQuery.trim() !== '') {
       const lowerQuery = searchQuery.toLowerCase();
       result = result.filter(pro => 
-        pro.name.toLowerCase().includes(lowerQuery) ||
-        pro.title.toLowerCase().includes(lowerQuery) ||
-        pro.description.toLowerCase().includes(lowerQuery) ||
-        pro.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+        (pro.name || '').toLowerCase().includes(lowerQuery) ||
+        (pro.title || '').toLowerCase().includes(lowerQuery) ||
+        (pro.description || '').toLowerCase().includes(lowerQuery) ||
+        (pro.tags || []).some(tag => tag.toLowerCase().includes(lowerQuery))
       );
     }
     
     result.sort((a, b) => {
+      // Safety check for objects
+      if (!a || !b) return 0;
+      
       if (a.isPromoted && !b.isPromoted) return -1;
       if (!a.isPromoted && b.isPromoted) return 1;
 
@@ -169,7 +180,7 @@ const App: React.FC = () => {
         const distB = calculateDistance(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
         return distA - distB;
       }
-      return b.rating - a.rating;
+      return (b.rating || 0) - (a.rating || 0);
     });
 
     setFilteredPros([...result]);

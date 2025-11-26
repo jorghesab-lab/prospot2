@@ -78,7 +78,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
         
         <div className="space-y-3 mt-auto">
           <div className="flex flex-wrap gap-2">
-            {professional.tags.map((tag) => (
+            {(professional.tags || []).map((tag) => (
               <span key={tag} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md font-medium">
                 {tag}
               </span>
@@ -93,7 +93,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
                   {professional.location} ({professional.department})
                 </span>
               </div>
-              {distance !== undefined && distance !== null && (
+              {distance !== undefined && distance !== null && distance !== Infinity && (
                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 whitespace-nowrap">
                    a {distance.toFixed(1)} km
                  </span>
