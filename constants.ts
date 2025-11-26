@@ -9,6 +9,18 @@ export const DEPARTMENTS = [
 
 export const CATEGORIES = Object.values(Category);
 
+// --- IMÁGENES POR DEFECTO POR CATEGORÍA ---
+export const CATEGORY_DEFAULT_IMAGES: Record<Category, string> = {
+  [Category.HOME_REPAIR]: 'https://images.unsplash.com/photo-1581094794329-cd11179a28fa?auto=format&fit=crop&q=80&w=600', // Tools/Repair
+  [Category.AUTOMOTIVE]: 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80&w=600', // Mechanic
+  [Category.TECHNOLOGY]: 'https://images.unsplash.com/photo-1531297461136-8208b50b6614?auto=format&fit=crop&q=80&w=600', // Tech/Computer
+  [Category.BUSINESS]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600', // Office
+  [Category.HEALTH]: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600', // Health/Medical
+  [Category.EDUCATION]: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600', // Books/Education
+  [Category.EVENTS]: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=600', // Event/Party
+  [Category.ALL]: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=600' // Generic
+};
+
 // --- CONFIGURACIÓN DEL FORMULARIO DE GOOGLE ---
 export const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfD_placeholder_id/viewform"; 
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Category, Professional } from '../types';
-import { DEPARTMENTS, CATEGORIES } from '../constants';
-import { MapPin, Save, X, Wand2 } from 'lucide-react';
+import { DEPARTMENTS, CATEGORIES, CATEGORY_DEFAULT_IMAGES } from '../constants';
+import { MapPin, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface ServiceFormProps {
   initialData?: Professional | null;
@@ -20,7 +20,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
     description: '',
     priceRange: '$$',
     availability: 'Lunes a Viernes',
-    imageUrl: `https://picsum.photos/400/400?random=${Math.floor(Math.random() * 1000)}`,
+    imageUrl: CATEGORY_DEFAULT_IMAGES[Category.HOME_REPAIR], // Init with default
     latitude: -32.8908,
     longitude: -68.8458,
     isPromoted: false,
@@ -31,12 +31,27 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
   });
 
   const [tagInput, setTagInput] = useState('');
+  const [isCustomImage, setIsCustomImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      // Determine if image is custom based on if it matches any default
+      const isDefault = Object.values(CATEGORY_DEFAULT_IMAGES).includes(initialData.imageUrl);
+      setIsCustomImage(!isDefault);
     }
   }, [initialData]);
+
+  // Logic to auto-change image when category changes, IF user hasn't uploaded a custom one
+  useEffect(() => {
+    if (!initialData && !isCustomImage && formData.category) {
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: CATEGORY_DEFAULT_IMAGES[formData.category as Category] || CATEGORY_DEFAULT_IMAGES[Category.HOME_REPAIR]
+      }));
+    }
+  }, [formData.category, isCustomImage, initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -79,9 +94,29 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
     }));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setUploadError(null);
+
+    if (file) {
+      // Validations
+      if (file.size > 800 * 1024) { // 800KB limit
+        setUploadError("La imagen es muy pesada. Máximo 800KB.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData(prev => ({ ...prev, imageUrl: base64String }));
+        setIsCustomImage(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate required fields roughly
     if (!formData.name || !formData.title) {
         alert("Por favor completa el nombre y el título del servicio.");
         return;
@@ -101,7 +136,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
       latitude: Number(formData.latitude),
       longitude: Number(formData.longitude),
       isPromoted: !!formData.isPromoted,
-      isVerified: isAdmin ? (formData.isVerified || true) : false, // Users verify false by default
+      isVerified: isAdmin ? (formData.isVerified || true) : false,
       rating: formData.rating || 5.0,
       reviewCount: formData.reviewCount || 0,
       tags: formData.tags || []
@@ -158,12 +193,72 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
             >
-              <option value="$">Low ($)</option>
-              <option value="$$">Medium ($$)</option>
-              <option value="$$$">High ($$$)</option>
+              <option value="$">Bajo ($)</option>
+              <option value="$$">Medio ($$)</option>
+              <option value="$$$">Alto ($$$)</option>
               <option value="$$$$">Premium ($$$$)</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+        <h3 className="text-sm font-bold text-slate-700 uppercase mb-4 border-b border-slate-200 pb-2">Imagen de Portada</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            <div className="md:col-span-2 space-y-4">
+                <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-2">Subir Foto / Logo (Opcional)</label>
+                   <div className="flex items-center gap-2">
+                       <label className="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-colors">
+                           <Upload className="w-4 h-4" />
+                           Elegir archivo
+                           <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                       </label>
+                       <span className="text-xs text-slate-500">Máx 800KB</span>
+                   </div>
+                   {uploadError && <p className="text-red-500 text-xs mt-2 font-bold">{uploadError}</p>}
+                </div>
+                
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">O pegar URL de imagen</label>
+                    <input 
+                        name="imageUrl"
+                        value={formData.imageUrl}
+                        onChange={(e) => {
+                            handleChange(e);
+                            setIsCustomImage(true);
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-sm" 
+                        placeholder="https://..."
+                    />
+                </div>
+            </div>
+            
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Vista Previa</label>
+                <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group">
+                    {formData.imageUrl ? (
+                        <img 
+                            src={formData.imageUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                // Fallback if url is broken
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error';
+                            }}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <ImageIcon className="w-8 h-8" />
+                        </div>
+                    )}
+                    {!isCustomImage && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-1">
+                            Imagen por defecto
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
 
