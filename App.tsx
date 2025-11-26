@@ -12,7 +12,6 @@ import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS } from './constants';
 import { Category, Professional, Coordinates, ViewMode, Advertisement } from './types';
 import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
-import { supabase } from './services/supabase';
 
 const App: React.FC = () => {
   // --- STATE ---
