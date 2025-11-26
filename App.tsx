@@ -11,40 +11,59 @@ import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS } from './constants';
 import { Category, Professional, Coordinates, ViewMode, Advertisement } from './types';
 import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
+import { supabase } from './services/supabase';
 
 const App: React.FC = () => {
   // --- STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('HOME');
   
-  // Data State (Editable with Persistence) - ROBUST LOADING
-  const [professionals, setProfessionals] = useState<Professional[]>(() => {
-    try {
-      const saved = localStorage.getItem('prospot_professionals');
-      if (!saved) return MOCK_PROFESSIONALS;
-      const parsed = JSON.parse(saved);
-      // Validation: Must be an array
-      return Array.isArray(parsed) ? parsed : MOCK_PROFESSIONALS;
-    } catch (e) {
-      console.error("Error reading professionals from local storage, resetting to defaults", e);
-      return MOCK_PROFESSIONALS;
-    }
-  });
+  // Data State
+  const [professionals, setProfessionals] = useState<Professional[]>(MOCK_PROFESSIONALS);
+  const [ads, setAds] = useState<Advertisement[]>(MOCK_ADS);
 
-  const [ads, setAds] = useState<Advertisement[]>(() => {
-    try {
-      const saved = localStorage.getItem('prospot_ads');
-      if (!saved) return MOCK_ADS;
-      const parsed = JSON.parse(saved);
-      // Validation: Must be an array
-      return Array.isArray(parsed) ? parsed : MOCK_ADS;
-    } catch (e) {
-      console.error("Error reading ads from local storage, resetting to defaults", e);
-      return MOCK_ADS;
-    }
-  });
+  // --- HYBRID DATA LOADING ---
+  useEffect(() => {
+    const loadData = async () => {
+      // 1. Try Loading from LocalStorage first (Instant)
+      try {
+        const localPros = localStorage.getItem('prospot_professionals');
+        if (localPros) {
+            const parsed = JSON.parse(localPros);
+            if(Array.isArray(parsed)) setProfessionals(parsed);
+        }
+        
+        const localAds = localStorage.getItem('prospot_ads');
+        if (localAds) {
+            const parsed = JSON.parse(localAds);
+            if(Array.isArray(parsed)) setAds(parsed);
+        }
+      } catch(e) { console.error("Local storage error", e); }
 
-  // Save to Local Storage whenever data changes
+      // 2. Try Loading from Supabase (Server) if configured
+      if (supabase) {
+        try {
+          const { data: proData, error: proError } = await supabase.from('professionals').select('*');
+          if (proData && !proError) {
+             setProfessionals(proData as unknown as Professional[]);
+             // Update local storage cache
+             localStorage.setItem('prospot_professionals', JSON.stringify(proData));
+          }
+
+          const { data: adData, error: adError } = await supabase.from('ads').select('*');
+          if (adData && !adError) {
+             setAds(adData as unknown as Advertisement[]);
+             localStorage.setItem('prospot_ads', JSON.stringify(adData));
+          }
+        } catch (err) {
+          console.log("Supabase connection skipped or failed, using local data.");
+        }
+      }
+    };
+    loadData();
+  }, []);
+
+  // Sync to LocalStorage on Change (Cache mechanism)
   useEffect(() => {
     localStorage.setItem('prospot_professionals', JSON.stringify(professionals));
   }, [professionals]);
@@ -73,37 +92,55 @@ const App: React.FC = () => {
   const feedAds = (ads || []).filter(ad => ad.position === 'feed');
   const sidebarAds = (ads || []).filter(ad => ad.position === 'sidebar');
 
-  // --- CRUD OPERATIONS ---
-  const handleAddProfessional = (newPro: Professional) => {
+  // --- CRUD OPERATIONS (HYBRID) ---
+  const handleAddProfessional = async (newPro: Professional) => {
+    // Optimistic Update
     setProfessionals(prev => [newPro, ...prev]);
+    
+    // DB Update
+    if (supabase) {
+        await supabase.from('professionals').insert([newPro]);
+    }
+
     if (!isAdmin) {
-        alert("¡Gracias! Tu servicio ha sido enviado y será revisado por un administrador.");
+        alert("¡Gracias! Tu servicio ha sido enviado.");
         setIsPublishModalOpen(false);
     }
   };
 
-  const handleUpdateProfessional = (updatedPro: Professional) => {
+  const handleUpdateProfessional = async (updatedPro: Professional) => {
     setProfessionals(prev => prev.map(p => p.id === updatedPro.id ? updatedPro : p));
+    
+    if (supabase) {
+        await supabase.from('professionals').update(updatedPro).eq('id', updatedPro.id);
+    }
   };
 
-  const handleDeleteProfessional = (id: string) => {
+  const handleDeleteProfessional = async (id: string) => {
     setProfessionals(prev => prev.filter(p => p.id !== id));
+    
+    if (supabase) {
+        await supabase.from('professionals').delete().eq('id', id);
+    }
   };
 
   // --- ADS CRUD ---
-  const handleAddAd = (newAd: Advertisement) => {
+  const handleAddAd = async (newAd: Advertisement) => {
       setAds(prev => [...prev, newAd]);
+      if (supabase) await supabase.from('ads').insert([newAd]);
   };
 
-  const handleUpdateAd = (updatedAd: Advertisement) => {
+  const handleUpdateAd = async (updatedAd: Advertisement) => {
       setAds(prev => prev.map(a => a.id === updatedAd.id ? updatedAd : a));
+      if (supabase) await supabase.from('ads').update(updatedAd).eq('id', updatedAd.id);
   };
 
-  const handleDeleteAd = (id: string) => {
+  const handleDeleteAd = async (id: string) => {
       setAds(prev => prev.filter(a => a.id !== id));
+      if (supabase) await supabase.from('ads').delete().eq('id', id);
   };
 
-  // Haversine formula with safety checks
+  // Haversine formula
   const calculateDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
     if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return Infinity;
     
@@ -169,7 +206,6 @@ const App: React.FC = () => {
     }
     
     result.sort((a, b) => {
-      // Safety check for objects
       if (!a || !b) return 0;
       
       if (a.isPromoted && !b.isPromoted) return -1;
@@ -272,7 +308,7 @@ const App: React.FC = () => {
       ) : (
         /* --- VIEW: HOME (SEARCH) --- */
         <>
-        {/* Hero Section - UPDATED TO SLATE-900 with Correct Overlay */}
+        {/* Hero Section */}
         <div className="bg-slate-900 pt-16 pb-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex-shrink-0">
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -471,7 +507,6 @@ const App: React.FC = () => {
                                     distance={userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, pro.latitude, pro.longitude) : null}
                                     isAdmin={isAdmin}
                                 />
-                                {/* Insert Feed Ad after the 3rd item (index 2) if it exists, or loop through feed ads */}
                                 {index === 2 && feedAds.length > 0 && (
                                     <AdCard ad={feedAds[0]} isAdmin={isAdmin} />
                                 )}
@@ -498,7 +533,7 @@ const App: React.FC = () => {
             </div>
         </main>
 
-        {/* CTA Footer - UPDATED TO SLATE-900 */}
+        {/* CTA Footer */}
         <footer className="bg-slate-900 text-slate-300 py-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
                 <div className="text-center md:text-left">
