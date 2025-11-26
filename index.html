@@ -11,9 +11,10 @@
     <!-- PWA Settings -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1581094794329-cd11179a28fa?auto=format&fit=crop&q=80&w=192&h=192">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0f172a/ffffff.png?text=ProSpot">
     
     <!-- Facebook / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website">
@@ -53,5 +54,7 @@
 </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>
+    <!-- CRUCIAL: Este script inicia la aplicación -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
