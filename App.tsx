@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
@@ -22,48 +23,47 @@ const App: React.FC = () => {
   const [professionals, setProfessionals] = useState<Professional[]>(MOCK_PROFESSIONALS);
   const [ads, setAds] = useState<Advertisement[]>(MOCK_ADS);
 
-  // --- HYBRID DATA LOADING ---
+  // --- CARGA DE DATOS ROBUSTA (Modo Autónomo) ---
   useEffect(() => {
     const loadData = async () => {
-      // 1. Try Loading from LocalStorage first (Instant)
       try {
+        // 1. Intentar leer de la memoria del navegador
         const localPros = localStorage.getItem('prospot_professionals');
-        if (localPros) {
-            const parsed = JSON.parse(localPros);
-            if(Array.isArray(parsed)) setProfessionals(parsed);
-        }
-        
         const localAds = localStorage.getItem('prospot_ads');
+
+        if (localPros) {
+            const parsedPros = JSON.parse(localPros);
+            if (Array.isArray(parsedPros) && parsedPros.length > 0) {
+                setProfessionals(parsedPros);
+            } else {
+                // Si la memoria está vacía o corrupta, usar Mocks
+                setProfessionals(MOCK_PROFESSIONALS);
+            }
+        } else {
+            // Primera vez que se abre la app
+            setProfessionals(MOCK_PROFESSIONALS);
+        }
+
         if (localAds) {
-            const parsed = JSON.parse(localAds);
-            if(Array.isArray(parsed)) setAds(parsed);
+            const parsedAds = JSON.parse(localAds);
+            if (Array.isArray(parsedAds)) {
+                setAds(parsedAds);
+            } else {
+                setAds(MOCK_ADS);
+            }
+        } else {
+             setAds(MOCK_ADS);
         }
-      } catch(e) { console.error("Local storage error", e); }
-
-      // 2. Try Loading from Supabase (Server) if configured
-      if (supabase) {
-        try {
-          const { data: proData, error: proError } = await supabase.from('professionals').select('*');
-          if (proData && !proError) {
-             setProfessionals(proData as unknown as Professional[]);
-             // Update local storage cache
-             localStorage.setItem('prospot_professionals', JSON.stringify(proData));
-          }
-
-          const { data: adData, error: adError } = await supabase.from('ads').select('*');
-          if (adData && !adError) {
-             setAds(adData as unknown as Advertisement[]);
-             localStorage.setItem('prospot_ads', JSON.stringify(adData));
-          }
-        } catch (err) {
-          console.log("Supabase connection skipped or failed, using local data.");
-        }
+      } catch (e) { 
+          console.error("Error cargando datos locales, usando backup:", e);
+          setProfessionals(MOCK_PROFESSIONALS);
+          setAds(MOCK_ADS);
       }
     };
     loadData();
   }, []);
 
-  // Sync to LocalStorage on Change (Cache mechanism)
+  // Guardar en memoria del navegador cada vez que hay cambios
   useEffect(() => {
     localStorage.setItem('prospot_professionals', JSON.stringify(professionals));
   }, [professionals]);
@@ -92,52 +92,34 @@ const App: React.FC = () => {
   const feedAds = (ads || []).filter(ad => ad.position === 'feed');
   const sidebarAds = (ads || []).filter(ad => ad.position === 'sidebar');
 
-  // --- CRUD OPERATIONS (HYBRID) ---
+  // --- CRUD OPERATIONS (LOCAL ONLY) ---
   const handleAddProfessional = async (newPro: Professional) => {
-    // Optimistic Update
     setProfessionals(prev => [newPro, ...prev]);
-    
-    // DB Update
-    if (supabase) {
-        await supabase.from('professionals').insert([newPro]);
-    }
-
     if (!isAdmin) {
-        alert("¡Gracias! Tu servicio ha sido enviado.");
+        alert("¡Gracias! Tu servicio ha sido guardado localmente.");
         setIsPublishModalOpen(false);
     }
   };
 
   const handleUpdateProfessional = async (updatedPro: Professional) => {
     setProfessionals(prev => prev.map(p => p.id === updatedPro.id ? updatedPro : p));
-    
-    if (supabase) {
-        await supabase.from('professionals').update(updatedPro).eq('id', updatedPro.id);
-    }
   };
 
   const handleDeleteProfessional = async (id: string) => {
     setProfessionals(prev => prev.filter(p => p.id !== id));
-    
-    if (supabase) {
-        await supabase.from('professionals').delete().eq('id', id);
-    }
   };
 
   // --- ADS CRUD ---
   const handleAddAd = async (newAd: Advertisement) => {
       setAds(prev => [...prev, newAd]);
-      if (supabase) await supabase.from('ads').insert([newAd]);
   };
 
   const handleUpdateAd = async (updatedAd: Advertisement) => {
       setAds(prev => prev.map(a => a.id === updatedAd.id ? updatedAd : a));
-      if (supabase) await supabase.from('ads').update(updatedAd).eq('id', updatedAd.id);
   };
 
   const handleDeleteAd = async (id: string) => {
       setAds(prev => prev.filter(a => a.id !== id));
-      if (supabase) await supabase.from('ads').delete().eq('id', id);
   };
 
   // Haversine formula
