@@ -1,0 +1,7 @@
+{
+  "name": "ProSpot",
+  "description": "Una plataforma moderna para conectar con profesionales, negocios, talleres y servicios locales utilizando búsqueda inteligente impulsada por IA.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
