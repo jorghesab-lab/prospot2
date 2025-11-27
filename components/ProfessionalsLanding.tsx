@@ -1,15 +1,24 @@
 
 import React from 'react';
-import { Sparkles, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Search, HeartHandshake, Quote, CheckCircle, Scale } from 'lucide-react';
+import { Sparkles, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Search, HeartHandshake, Quote, CheckCircle, Scale, TrendingUp } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ProfessionalsLandingProps {
   onRegister: () => void;
-  onBack: () => void; // Used for "Volver" usually, but now "Start Search"
-  onStartSearching?: () => void; // Explicit prop for clarity
+  onBack: () => void;
+  onStartSearching?: () => void;
 }
 
+const data = [
+  { name: 'Mes 1', consultas: 120 },
+  { name: 'Mes 2', consultas: 300 },
+  { name: 'Mes 3', consultas: 600 },
+  { name: 'Mes 4', consultas: 1200 },
+  { name: 'Mes 5', consultas: 2500 },
+  { name: 'Mes 6', consultas: 4800 },
+];
+
 export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRegister, onBack, onStartSearching }) => {
-  // Fallback if prop not passed yet
   const handleSearchClick = onStartSearching || onBack;
 
   return (
@@ -34,24 +43,87 @@ export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRe
         </div>
       </div>
 
+      {/* Impact & Reach Section (NEW) */}
+      <div className="bg-white py-16 px-4 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="w-6 h-6 text-amber-500" />
+                        <span className="text-amber-600 font-bold uppercase tracking-wider text-sm">Crecimiento Exponencial</span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6">
+                        El alcance que tu negocio <br/>
+                        <span className="text-blue-600">estaba esperando.</span>
+                    </h2>
+                    <p className="text-slate-600 text-lg mb-6 leading-relaxed">
+                        Olvídate de repartir volantes o depender solo del "boca a boca". Con ProSpot, tu servicio es visible para miles de personas justo en el momento en que tienen una urgencia.
+                    </p>
+                    
+                    <div className="flex items-center gap-6 mb-8">
+                        <div>
+                            <span className="block text-4xl md:text-5xl font-extrabold text-slate-900">+25,000</span>
+                            <span className="text-sm font-bold text-slate-500 uppercase">Clientes Potenciales</span>
+                        </div>
+                        <div className="h-12 w-px bg-slate-200"></div>
+                        <div>
+                            <span className="block text-4xl md:text-5xl font-extrabold text-blue-600">100%</span>
+                            <span className="text-sm font-bold text-slate-500 uppercase">Digital y Medible</span>
+                        </div>
+                    </div>
+
+                    <button onClick={onRegister} className="text-blue-600 font-bold hover:text-blue-800 flex items-center gap-2">
+                        Ver planes para profesionales <ArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-inner">
+                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 text-center">Proyección de Consultas Mensuales</h3>
+                    <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={data}>
+                                <defs>
+                                    <linearGradient id="colorConsultas" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                                <YAxis hide />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Area type="monotone" dataKey="consultas" stroke="#2563eb" fillOpacity={1} fill="url(#colorConsultas)" strokeWidth={3} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
       {/* Benefits Section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900">Tecnología al servicio de Mendoza</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-4">
                     <Sparkles className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">IA Inteligente</h3>
                 <p className="text-slate-600">No necesitas saber la categoría exacta. Solo escribe "mi auto hace ruido" y nuestra IA te conectará con el mecánico adecuado.</p>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4">
                     <MapPin className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Cerca de Ti</h3>
                 <p className="text-slate-600">Priorizamos los servicios de tu barrio. Ahorra tiempo y dinero en traslados conectando con vecinos expertos.</p>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-4">
                     <HeartHandshake className="w-6 h-6" />
                 </div>

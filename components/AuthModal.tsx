@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, UserRole, AuthMode } from '../types';
-import { Mail, Lock, User as UserIcon, Briefcase, Phone, MapPin, X, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Briefcase, Phone, MapPin, X, ArrowRight, Chrome } from 'lucide-react';
 
 interface AuthModalProps {
   onLogin: (user: User) => void;
@@ -10,7 +10,10 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialMode = 'LOGIN' }) => {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
+  // If initial mode is LOGIN or REGISTER_USER, we default to the simple 'USER' view. 
+  // If it's REGISTER_PROVIDER, we show the provider form.
+  const [isProviderMode, setIsProviderMode] = useState(initialMode === 'REGISTER_PROVIDER');
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,29 +22,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
     address: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleLogin = () => {
+    // Simulate Google Login
+    const googleUser: User = {
+        id: 'google-' + Date.now(),
+        name: 'Usuario Google', // In a real app, this comes from Google
+        email: 'usuario@gmail.com', // In a real app, this comes from Google
+        role: 'USER',
+        createdAt: new Date().toISOString(),
+        contactHistory: []
+    };
+    onLogin(googleUser);
+    onClose();
+  };
+
+  const handleProviderSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate API Call / Registration
-    const newUser: User = {
+    const newProvider: User = {
       id: Date.now().toString(),
-      name: formData.name || 'Usuario',
+      name: formData.name,
       email: formData.email,
-      role: mode === 'REGISTER_PROVIDER' ? 'PROVIDER' : 'USER',
+      role: 'PROVIDER',
       phone: formData.phone,
       address: formData.address,
       createdAt: new Date().toISOString(),
       contactHistory: []
     };
 
-    // For login mode, we'd normally validate, but for this demo we just pass a mock user
-    if (mode === 'LOGIN') {
-       // Mock Login
-       onLogin({ ...newUser, name: 'Usuario Demo', role: 'USER' });
-    } else {
-       onLogin(newUser);
-    }
-    
+    onLogin(newProvider);
     onClose();
   };
 
@@ -58,139 +67,136 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
 
         <div className="bg-slate-900 p-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-2">
-                {mode === 'LOGIN' && 'Bienvenido a ProSpot'}
-                {mode === 'REGISTER_USER' && 'Crea tu Cuenta'}
-                {mode === 'REGISTER_PROVIDER' && 'Únete como Profesional'}
+                {isProviderMode ? 'Únete como Profesional' : 'Bienvenido a ProSpot'}
             </h2>
             <p className="text-slate-400 text-sm">
-                {mode === 'LOGIN' && 'Ingresa para buscar y contactar servicios'}
-                {mode === 'REGISTER_USER' && 'Para calificar y guardar tu historial'}
-                {mode === 'REGISTER_PROVIDER' && 'Publica tus servicios y consigue clientes'}
+                {isProviderMode 
+                    ? 'Publica tus servicios y consigue clientes hoy mismo' 
+                    : 'Ingresa para buscar, contactar y calificar servicios'}
             </p>
         </div>
 
-        {/* Tabs for Registration */}
-        {mode !== 'LOGIN' && (
-            <div className="flex border-b border-slate-200">
-                <button 
-                    onClick={() => setMode('REGISTER_USER')}
-                    className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 ${mode === 'REGISTER_USER' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500'}`}
-                >
-                    <UserIcon className="w-4 h-4" /> Usuario
-                </button>
-                <button 
-                    onClick={() => setMode('REGISTER_PROVIDER')}
-                    className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 ${mode === 'REGISTER_PROVIDER' ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50' : 'text-slate-500'}`}
-                >
-                    <Briefcase className="w-4 h-4" /> Profesional
-                </button>
-            </div>
-        )}
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200">
+            <button 
+                onClick={() => setIsProviderMode(false)}
+                className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 ${!isProviderMode ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500'}`}
+            >
+                <UserIcon className="w-4 h-4" /> Usuario / Cliente
+            </button>
+            <button 
+                onClick={() => setIsProviderMode(true)}
+                className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 ${isProviderMode ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50' : 'text-slate-500'}`}
+            >
+                <Briefcase className="w-4 h-4" /> Profesional
+            </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            
-            {mode !== 'LOGIN' && (
-                <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Completo</label>
-                    <div className="relative">
-                        <UserIcon className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
-                        <input 
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="Tu nombre"
-                            required
-                        />
+        <div className="p-8">
+            {!isProviderMode ? (
+                // USER VIEW - GOOGLE LOGIN ONLY
+                <div className="text-center space-y-6">
+                    <div className="bg-blue-50 p-4 rounded-xl mb-4">
+                        <p className="text-sm text-slate-600 mb-2">Acceso rápido y seguro para encontrar lo que buscas.</p>
                     </div>
+                    
+                    <button 
+                        onClick={handleGoogleLogin}
+                        className="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
+                    >
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
+                        Continuar con Google
+                    </button>
+                    
+                    <p className="text-xs text-slate-400 mt-4">
+                        Al continuar, aceptas nuestros términos y condiciones.
+                    </p>
                 </div>
-            )}
-
-            <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Correo Electrónico</label>
-                <div className="relative">
-                    <Mail className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
-                    <input 
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="ejemplo@correo.com"
-                        required
-                    />
-                </div>
-            </div>
-
-            {mode === 'REGISTER_PROVIDER' && (
-                <>
+            ) : (
+                // PROVIDER VIEW - FULL FORM
+                <form onSubmit={handleProviderSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Celular / WhatsApp</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre del Responsable</label>
                         <div className="relative">
-                            <Phone className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+                            <UserIcon className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+                            <input 
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="Tu nombre"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Correo Electrónico</label>
+                        <div className="relative">
+                            <Mail className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+                            <input 
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="negocio@email.com"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Celular</label>
                             <input 
                                 name="phone"
                                 type="tel"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                placeholder="+54 9 261..."
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="+54 9..."
                                 required
                             />
                         </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Domicilio / Base</label>
-                        <div className="relative">
-                            <MapPin className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Zona/Barrio</label>
                             <input 
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                placeholder="Ciudad o Dirección"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="Ciudad"
                                 required
                             />
                         </div>
                     </div>
-                </>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Crear Contraseña</label>
+                        <div className="relative">
+                            <Lock className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
+                            <input 
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-4"
+                    >
+                        Crear Cuenta Profesional <ArrowRight className="w-5 h-5" />
+                    </button>
+                </form>
             )}
-
-            <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contraseña</label>
-                <div className="relative">
-                    <Lock className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
-                    <input 
-                        name="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        placeholder="••••••••"
-                        required
-                    />
-                </div>
-            </div>
-
-            <button 
-                type="submit"
-                className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-4"
-            >
-                {mode === 'LOGIN' ? 'Ingresar' : 'Registrarme'} <ArrowRight className="w-5 h-5" />
-            </button>
-            
-            <div className="text-center pt-2">
-                {mode === 'LOGIN' ? (
-                    <p className="text-sm text-slate-500">
-                        ¿No tienes cuenta? <button type="button" onClick={() => setMode('REGISTER_USER')} className="text-blue-600 font-bold hover:underline">Regístrate</button>
-                    </p>
-                ) : (
-                    <p className="text-sm text-slate-500">
-                        ¿Ya tienes cuenta? <button type="button" onClick={() => setMode('LOGIN')} className="text-blue-600 font-bold hover:underline">Inicia Sesión</button>
-                    </p>
-                )}
-            </div>
-        </form>
+        </div>
       </div>
     </div>
   );
