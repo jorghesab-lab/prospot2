@@ -23,7 +23,7 @@ const App: React.FC = () => {
   const [adminPassword, setAdminPassword] = useState('admin123'); // Default admin pass
   
   // --- APP STATE ---
-  const [viewMode, setViewMode] = useState<ViewMode>('HOME');
+  const [viewMode, setViewMode] = useState<ViewMode>('PROFESSIONALS_LANDING'); // INITIAL VIEW CHANGED
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [ads, setAds] = useState<Advertisement[]>([]);
 
@@ -125,7 +125,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setIsAdmin(false);
-    setViewMode('HOME');
+    setViewMode('PROFESSIONALS_LANDING'); // Go back to landing on logout if desired, or stay home
   };
 
   const handleDeleteUser = (id: string) => {
@@ -242,7 +242,7 @@ const App: React.FC = () => {
         onOpenPublishModal={() => setIsPublishModalOpen(true)}
         onOpenAdminPanel={() => setViewMode('ADMIN_DASHBOARD')}
         onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}
-        onGoHome={() => setViewMode('HOME')}
+        onGoHome={() => setViewMode('PROFESSIONALS_LANDING')} // Logo goes to Landing
         currentUser={currentUser}
         onOpenLogin={() => { setAuthMode('LOGIN'); setIsAuthModalOpen(true); }}
         onLogout={handleLogout}
@@ -285,15 +285,16 @@ const App: React.FC = () => {
             onDeleteAd={handleDeleteAd}
             onDeleteUser={handleDeleteUser}
             onChangeAdminPassword={setAdminPassword}
-            onClose={() => setViewMode('HOME')}
+            onClose={() => setViewMode('PROFESSIONALS_LANDING')}
         />
       ) : viewMode === 'PROFESSIONALS_LANDING' ? (
         <ProfessionalsLanding 
             onRegister={() => { setAuthMode('REGISTER_PROVIDER'); setIsAuthModalOpen(true); }}
-            onBack={() => setViewMode('HOME')}
+            onStartSearching={() => setViewMode('HOME')}
+            onBack={() => setViewMode('HOME')} // Legacy prop, used for switching
         />
       ) : (
-        /* HOME VIEW */
+        /* HOME VIEW (SEARCH) */
         <>
         <div className="bg-slate-900 pt-16 pb-24 px-4 relative overflow-hidden flex-shrink-0">
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
@@ -386,6 +387,9 @@ const App: React.FC = () => {
                     <h3 className="text-2xl font-bold text-white mb-2">¿Ofreces un servicio?</h3>
                     <button onClick={() => { setAuthMode('REGISTER_PROVIDER'); setIsAuthModalOpen(true); }} className="inline-flex items-center gap-2 text-white font-bold hover:text-amber-400">Registrar mi negocio <ArrowRight className="w-4 h-4" /></button>
                 </div>
+                <div className="text-sm text-slate-500">
+                    &copy; 2024 ProSpot Mendoza. Todos los derechos reservados.
+                </div>
             </div>
         </footer>
         </>
@@ -396,7 +400,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-amber-400" /><span className="font-bold">MODO ADMIN</span></div>
             <div className="flex gap-4">
                 <button onClick={() => setViewMode(viewMode === 'HOME' ? 'ADMIN_DASHBOARD' : 'HOME')} className="bg-slate-700 px-3 py-1 rounded text-sm">{viewMode === 'HOME' ? 'Panel' : 'Ver Web'}</button>
-                <button onClick={() => { setIsAdmin(false); setViewMode('HOME'); }} className="bg-red-600 px-4 py-1.5 rounded text-sm font-bold flex gap-2"><LogOut className="w-4 h-4" /> Salir</button>
+                <button onClick={() => { setIsAdmin(false); setViewMode('PROFESSIONALS_LANDING'); }} className="bg-red-600 px-4 py-1.5 rounded text-sm font-bold flex gap-2"><LogOut className="w-4 h-4" /> Salir</button>
             </div>
         </div>
       )}
