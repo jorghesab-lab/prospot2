@@ -8,7 +8,7 @@ import { AdCard, SidebarAd } from './components/AdCard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ServiceForm } from './components/ServiceForm';
 import { ProfessionalsLanding } from './components/ProfessionalsLanding';
-import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS } from './constants';
+import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS, CATEGORY_DEFAULT_IMAGES } from './constants';
 import { Category, Professional, Coordinates, ViewMode, Advertisement } from './types';
 import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
@@ -33,7 +33,7 @@ const App: React.FC = () => {
               const { data: adsData, error: adsError } = await supabase.from('ads').select('*');
 
               if (!prosError && prosData) {
-                  setProfessionals(prosData as Professional[]);
+                  setProfessionals(fixImages(prosData as Professional[]));
               } else {
                   // Fallback si la tabla no existe o error
                   loadLocalData('pros');
@@ -59,7 +59,12 @@ const App: React.FC = () => {
             const localPros = localStorage.getItem('prospot_professionals');
             if (localPros) {
                 const parsed = JSON.parse(localPros);
-                setProfessionals(Array.isArray(parsed) && parsed.length > 0 ? parsed : MOCK_PROFESSIONALS);
+                // Si hay datos locales, asegurarse de que son un array y corregir imágenes viejas
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setProfessionals(fixImages(parsed));
+                } else {
+                    setProfessionals(MOCK_PROFESSIONALS);
+                }
             } else {
                 setProfessionals(MOCK_PROFESSIONALS);
             }
@@ -77,6 +82,19 @@ const App: React.FC = () => {
 
     loadData();
   }, []);
+
+  // Helper function to auto-fix old picsum images to new category images
+  const fixImages = (pros: Professional[]): Professional[] => {
+      return pros.map(p => {
+          if (p.imageUrl && (p.imageUrl.includes('picsum.photos') || p.imageUrl.includes('placehold.co'))) {
+              return {
+                  ...p,
+                  imageUrl: CATEGORY_DEFAULT_IMAGES[p.category] || CATEGORY_DEFAULT_IMAGES[Category.ALL]
+              };
+          }
+          return p;
+      });
+  };
 
   // Sincronización LocalStorage (Backup siempre activo)
   useEffect(() => {
