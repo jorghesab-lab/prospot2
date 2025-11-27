@@ -64,7 +64,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Construcción', 'Premium', 'Arquitectura'],
     isVerified: true,
     isPromoted: true,
-    availability: 'Agenda Abierta'
+    availability: 'Agenda Abierta',
+    email: 'contacto@andina.com',
+    whatsapp: '+5492615550001'
   },
   {
     id: 'admin-2',
@@ -83,7 +85,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Oficial', 'Garantía', 'Mecánica'],
     isVerified: true,
     isPromoted: true,
-    availability: 'Lunes a Sábado'
+    availability: 'Lunes a Sábado',
+    email: 'taller@cuyoauto.com',
+    whatsapp: '+5492615550002'
   },
   {
     id: 'admin-3',
@@ -102,7 +106,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Gasista', 'Urgencias', '24hs'],
     isVerified: true,
     isPromoted: true,
-    availability: '24/7'
+    availability: '24/7',
+    email: 'urgencias@serviciosya.com',
+    whatsapp: '+5492615550003'
   },
 
   // --- REGISTRADOS POR FORMULARIO (SIMULACIÓN) ---
@@ -123,7 +129,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Electricidad', 'Emergencias', 'Hogar'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Disponible hoy'
+    availability: 'Disponible hoy',
+    email: 'carlos.ruiz@email.com',
+    whatsapp: '+5492615551001'
   },
   {
     id: '2',
@@ -142,7 +150,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Mecánica', '4x4', 'Taller'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Lunes a Sábado'
+    availability: 'Lunes a Sábado',
+    email: 'contacto@tallersr.com',
+    whatsapp: '+5492604442002'
   },
   {
     id: '3',
@@ -161,7 +171,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Computadoras', 'Agro-Tech', 'Tienda'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Abierto ahora'
+    availability: 'Abierto ahora',
+    email: 'soporte@techsolutions.com',
+    whatsapp: '+5492634443003'
   },
   {
     id: '4',
@@ -180,7 +192,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Salud', 'Kinesiología', 'Bienestar'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Cita previa'
+    availability: 'Cita previa',
+    email: 'turnos@draelena.com',
+    whatsapp: '+5492615554004'
   },
   {
     id: '5',
@@ -199,7 +213,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Plomería', 'Riego', 'Agua'],
     isVerified: false,
     isPromoted: false,
-    availability: '24 Horas'
+    availability: '24 Horas',
+    email: '',
+    whatsapp: '+5492615555005'
   },
   {
     id: '6',
@@ -218,7 +234,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Consultoría', 'Vino', 'Negocios'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Lunes a Viernes'
+    availability: 'Lunes a Viernes',
+    email: 'info@perezconsultores.com',
+    whatsapp: '+5492615556006'
   },
   {
     id: '7',
@@ -237,7 +255,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Música', 'Folklore', 'Arte'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Cupos limitados'
+    availability: 'Cupos limitados',
+    email: 'clases@elvalle.com',
+    whatsapp: '+5492622447007'
   },
   {
     id: '8',
@@ -256,7 +276,9 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Eventos', 'Bodas', 'Catering'],
     isVerified: true,
     isPromoted: false,
-    availability: 'Reserva con 1 mes'
+    availability: 'Reserva con 1 mes',
+    email: 'bodas@eventosdelsol.com',
+    whatsapp: '+5492634448008'
   },
   {
     id: '9',
@@ -275,6 +297,8 @@ export const MOCK_PROFESSIONALS: Professional[] = [
     tags: ['Cuero', 'Campo', 'Tienda'],
     isVerified: false,
     isPromoted: false,
-    availability: 'Lun-Sab 9-18h'
+    availability: 'Lun-Sab 9-18h',
+    email: '',
+    whatsapp: '+5492604449009'
   }
 ];

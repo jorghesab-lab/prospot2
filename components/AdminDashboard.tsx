@@ -1,34 +1,40 @@
+
 import React, { useState } from 'react';
-import { Professional, Category, Advertisement } from '../types';
+import { Professional, Category, Advertisement, User } from '../types';
 import { ServiceForm } from './ServiceForm';
 import { AdForm } from './AdForm';
-import { Trash2, Pencil, Search, Upload, Plus, FileSpreadsheet, Megaphone } from 'lucide-react';
+import { Trash2, Pencil, Search, Upload, Plus, FileSpreadsheet, Megaphone, Users, Shield, Key } from 'lucide-react';
 import { DEPARTMENTS } from '../constants';
 
 interface AdminDashboardProps {
   professionals: Professional[];
   ads: Advertisement[];
+  users: User[];
   onAdd: (pro: Professional) => void;
   onUpdate: (pro: Professional) => void;
   onDelete: (id: string) => void;
   onAddAd: (ad: Advertisement) => void;
   onUpdateAd: (ad: Advertisement) => void;
   onDeleteAd: (id: string) => void;
+  onDeleteUser: (id: string) => void;
+  onChangeAdminPassword: (newPass: string) => void;
   onClose: () => void;
 }
 
-type Tab = 'LIST' | 'CREATE' | 'IMPORT' | 'ADS';
+type Tab = 'LIST' | 'CREATE' | 'IMPORT' | 'ADS' | 'USERS' | 'SETTINGS';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-    professionals, ads, 
+    professionals, ads, users,
     onAdd, onUpdate, onDelete, 
     onAddAd, onUpdateAd, onDeleteAd,
+    onDeleteUser, onChangeAdminPassword,
     onClose 
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('LIST');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [csvText, setCsvText] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   // LIST TAB LOGIC
   const filteredPros = professionals.filter(p => 
@@ -39,11 +45,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleEditClick = (id: string) => {
     setEditingId(id);
     setActiveTab('CREATE');
-  };
-
-  const handleEditAdClick = (id: string) => {
-    setEditingId(id);
-    setActiveTab('ADS');
   };
 
   const handleFormSubmit = (data: Professional) => {
@@ -66,8 +67,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleCsvImport = () => {
-    // Basic CSV Parser
-    // Format expected: Name,Category,Department,Description,Price
     if (!csvText.trim()) return;
 
     const lines = csvText.split('\n');
@@ -87,13 +86,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 rating: 5.0,
                 reviewCount: 1,
                 location: 'Oficina Central',
-                latitude: -32.8908 + (Math.random() * 0.05), // Randomize slightly around center
+                latitude: -32.8908 + (Math.random() * 0.05), 
                 longitude: -68.8458 + (Math.random() * 0.05),
                 imageUrl: `https://picsum.photos/400/400?random=${Math.floor(Math.random()*500)}`,
                 tags: ['Importado'],
                 isVerified: true,
                 isPromoted: false,
-                availability: 'Consultar'
+                availability: 'Consultar',
+                email: 'contacto@prospot.app',
+                whatsapp: ''
             };
             onAdd(newPro);
             addedCount++;
@@ -105,16 +106,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setActiveTab('LIST');
   };
 
-  // Sub-render for Ads Tab Content
   const renderAdsTab = () => {
-    if (editingId || activeTab === 'ADS' && ads.length === 0 && editingId === 'new') { 
-        // Note: I'm using editingId='new' as a hack to show form when list is empty if I wanted, 
-        // but cleaner is just checking a generic "isEditing" state. 
-        // For now, let's reuse editingId. If null -> List. If string -> Edit. 
-        // But how to trigger "New"? I'll add a boolean or check specific ID.
-        // Let's simplify: In ADS tab, we show list. Clicking "New" sets editingId='NEW'.
-    }
-
     if (editingId) {
         return (
             <div className="max-w-3xl mx-auto">
@@ -161,15 +153,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </span>
                              </div>
                              <h4 className="font-bold text-slate-900 leading-tight">{ad.title}</h4>
-                             <p className="text-xs text-slate-500 mt-2 truncate">{ad.linkUrl}</p>
                          </div>
                     </div>
                 ))}
-                {ads.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                        No hay publicidad cargada.
-                    </div>
-                )}
             </div>
         </div>
     );
@@ -180,39 +166,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex justify-between items-center mb-8">
         <div>
             <h1 className="text-3xl font-bold text-slate-900">Panel de Administración</h1>
-            <p className="text-slate-500">Gestiona los servicios, estadísticas y usuarios.</p>
+            <p className="text-slate-500">Gestiona los servicios, usuarios y seguridad.</p>
         </div>
         <button onClick={onClose} className="text-slate-500 hover:text-slate-800 font-medium">
             Volver al Inicio
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-slate-200 pb-1 overflow-x-auto">
-        <button 
-            onClick={() => { setActiveTab('LIST'); setEditingId(null); }}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'LIST' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-            <Search className="w-4 h-4" /> Mis Servicios
-        </button>
-        <button 
-            onClick={() => { setActiveTab('CREATE'); setEditingId(null); }}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'CREATE' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-            <Plus className="w-4 h-4" /> {editingId && activeTab === 'CREATE' ? 'Editar Servicio' : 'Nuevo Servicio'}
-        </button>
-        <button 
-            onClick={() => { setActiveTab('ADS'); setEditingId(null); }}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'ADS' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-            <Megaphone className="w-4 h-4" /> Publicidad
-        </button>
-        <button 
-            onClick={() => { setActiveTab('IMPORT'); setEditingId(null); }}
-            className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'IMPORT' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
-        >
-            <FileSpreadsheet className="w-4 h-4" /> Importar Excel
-        </button>
+        <button onClick={() => { setActiveTab('LIST'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'LIST' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><Search className="w-4 h-4" /> Mis Servicios</button>
+        <button onClick={() => { setActiveTab('CREATE'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'CREATE' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><Plus className="w-4 h-4" /> Nuevo Servicio</button>
+        <button onClick={() => { setActiveTab('ADS'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'ADS' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><Megaphone className="w-4 h-4" /> Publicidad</button>
+        <button onClick={() => { setActiveTab('USERS'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'USERS' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><Users className="w-4 h-4" /> Usuarios</button>
+        <button onClick={() => { setActiveTab('IMPORT'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'IMPORT' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><FileSpreadsheet className="w-4 h-4" /> Importar</button>
+        <button onClick={() => { setActiveTab('SETTINGS'); setEditingId(null); }} className={`px-4 py-2 font-bold text-sm flex items-center gap-2 whitespace-nowrap ${activeTab === 'SETTINGS' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}><Key className="w-4 h-4" /> Seguridad</button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 min-h-[500px] p-6">
@@ -230,14 +197,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                     <Search className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" />
                 </div>
-                
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-bold">
                                 <th className="p-3">Nombre</th>
                                 <th className="p-3">Categoría</th>
-                                <th className="p-3">Estado</th>
+                                <th className="p-3">Contacto</th>
                                 <th className="p-3 text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -249,31 +215,96 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         <div className="text-xs text-slate-500">{pro.title}</div>
                                     </td>
                                     <td className="p-3">
-                                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-                                            {pro.category}
-                                        </span>
+                                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">{pro.category}</span>
                                     </td>
-                                    <td className="p-3">
-                                        {pro.isPromoted && <span className="text-xs font-bold text-amber-600 mr-2">DESTACADO</span>}
-                                        {pro.isVerified ? <span className="text-xs text-emerald-600">Verificado</span> : <span className="text-xs text-slate-400">Pendiente</span>}
+                                    <td className="p-3 text-xs text-slate-600">
+                                        {pro.whatsapp ? '✅ WhatsApp' : '❌'}<br/>
+                                        {pro.email ? '✅ Email' : ''}
                                     </td>
                                     <td className="p-3 text-right">
-                                        <button onClick={() => handleEditClick(pro.id)} className="text-blue-600 hover:bg-blue-50 p-2 rounded mr-1" title="Editar">
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => { if(window.confirm('¿Eliminar servicio?')) onDelete(pro.id) }} className="text-red-600 hover:bg-red-50 p-2 rounded" title="Eliminar">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <button onClick={() => handleEditClick(pro.id)} className="text-blue-600 hover:bg-blue-50 p-2 rounded mr-1"><Pencil className="w-4 h-4" /></button>
+                                        <button onClick={() => { if(window.confirm('¿Eliminar servicio?')) onDelete(pro.id) }} className="text-red-600 hover:bg-red-50 p-2 rounded"><Trash2 className="w-4 h-4" /></button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    {filteredPros.length === 0 && (
-                        <div className="text-center py-12 text-slate-500">No se encontraron servicios.</div>
-                    )}
                 </div>
             </>
+        )}
+
+        {/* USERS TAB */}
+        {activeTab === 'USERS' && (
+            <div>
+                 <h2 className="text-xl font-bold mb-4">Gestión de Usuarios</h2>
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-bold">
+                                <th className="p-3">Usuario</th>
+                                <th className="p-3">Rol</th>
+                                <th className="p-3">Fecha Registro</th>
+                                <th className="p-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map(u => (
+                                <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                    <td className="p-3">
+                                        <div className="font-bold text-slate-900">{u.name}</div>
+                                        <div className="text-xs text-slate-500">{u.email}</div>
+                                    </td>
+                                    <td className="p-3">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.role === 'PROVIDER' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {u.role}
+                                        </span>
+                                    </td>
+                                    <td className="p-3 text-xs text-slate-500">{new Date(u.createdAt).toLocaleDateString()}</td>
+                                    <td className="p-3 text-right">
+                                        <button onClick={() => { if(window.confirm('¿Borrar usuario?')) onDeleteUser(u.id) }} className="text-red-600 hover:bg-red-50 p-2 rounded"><Trash2 className="w-4 h-4" /></button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                 </div>
+            </div>
+        )}
+
+        {/* SETTINGS TAB */}
+        {activeTab === 'SETTINGS' && (
+            <div className="max-w-xl mx-auto">
+                 <h2 className="text-xl font-bold mb-4">Seguridad de Administrador</h2>
+                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                     <label className="block text-sm font-bold text-slate-700 mb-2">Cambiar Contraseña Maestra</label>
+                     <div className="flex gap-2">
+                         <input 
+                            type="text"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+                            placeholder="Nueva contraseña..."
+                         />
+                         <button 
+                            onClick={() => {
+                                if (newPassword.trim().length > 3) {
+                                    onChangeAdminPassword(newPassword.trim());
+                                    alert('Contraseña actualizada correctamente.');
+                                    setNewPassword('');
+                                } else {
+                                    alert('La contraseña debe tener al menos 4 caracteres.');
+                                }
+                            }}
+                            className="bg-slate-900 text-white px-4 py-2 rounded font-bold hover:bg-slate-800"
+                         >
+                             Actualizar
+                         </button>
+                     </div>
+                     <p className="text-xs text-slate-500 mt-2">
+                         Esta contraseña se usa para entrar al modo oculto (5 clicks en logo).
+                     </p>
+                 </div>
+            </div>
         )}
 
         {/* CREATE / EDIT SERVICE VIEW */}
@@ -298,22 +329,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  <div className="bg-slate-50 p-8 rounded-xl border border-slate-200 border-dashed">
                     <FileSpreadsheet className="w-12 h-12 text-green-600 mx-auto mb-4" />
                     <h2 className="text-xl font-bold mb-2">Importar masivamente desde Excel/CSV</h2>
-                    <p className="text-slate-500 mb-6 text-sm">
-                        Copia y pega los datos de tu Excel aquí. <br/>
-                        Formato requerido: <code className="bg-slate-200 px-1 rounded">Nombre, Categoría, Departamento, Descripción, Precio</code>
-                    </p>
                     <textarea 
                         className="w-full h-48 p-4 border border-slate-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-green-500 mb-4"
-                        placeholder={`Ejemplo:\nFerretería Central, Negocios y Tiendas, Godoy Cruz, Herramientas industriales, $$\nPlomero Mario, Reparaciones del Hogar, Guaymallén, Urgencias 24hs, $`}
+                        placeholder={`Ejemplo: Nombre,Categoría...`}
                         value={csvText}
                         onChange={(e) => setCsvText(e.target.value)}
                     />
-                    <button 
-                        onClick={handleCsvImport}
-                        className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 flex items-center gap-2 mx-auto"
-                    >
-                        <Upload className="w-4 h-4" /> Procesar Datos
-                    </button>
+                    <button onClick={handleCsvImport} className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 flex items-center gap-2 mx-auto"><Upload className="w-4 h-4" /> Procesar Datos</button>
                  </div>
             </div>
         )}

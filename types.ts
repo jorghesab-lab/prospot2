@@ -1,3 +1,4 @@
+
 export enum Category {
   ALL = 'Todos',
   HOME_REPAIR = 'Reparaciones del Hogar',
@@ -27,13 +28,16 @@ export interface Professional {
   isVerified: boolean;
   isPromoted: boolean;
   availability: string;
+  // New Contact Fields
+  email: string;
+  whatsapp: string;
 }
 
 export interface Advertisement {
   id: string;
   title: string;
   imageUrl: string;
-  linkUrl: string; // WhatsApp or Website
+  linkUrl: string;
   position: 'sidebar' | 'feed';
   advertiserName: string;
 }
@@ -55,3 +59,20 @@ export interface Coordinates {
 }
 
 export type ViewMode = 'HOME' | 'ADMIN_DASHBOARD' | 'PROFESSIONALS_LANDING';
+
+// --- AUTH & USER TYPES ---
+
+export type UserRole = 'VISITOR' | 'USER' | 'PROVIDER' | 'ADMIN';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string;    // Only for Providers
+  address?: string;  // Only for Providers
+  contactHistory?: string[]; // IDs of professionals contacted
+  createdAt: string;
+}
+
+export type AuthMode = 'LOGIN' | 'REGISTER_USER' | 'REGISTER_PROVIDER';

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Category, Professional } from '../types';
 import { DEPARTMENTS, CATEGORIES, CATEGORY_DEFAULT_IMAGES } from '../constants';
-import { MapPin, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Save, X, Upload, Image as ImageIcon, Phone, Mail } from 'lucide-react';
 
 interface ServiceFormProps {
   initialData?: Professional | null;
@@ -20,14 +21,16 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
     description: '',
     priceRange: '$$',
     availability: 'Lunes a Viernes',
-    imageUrl: CATEGORY_DEFAULT_IMAGES[Category.HOME_REPAIR], // Init with default
+    imageUrl: CATEGORY_DEFAULT_IMAGES[Category.HOME_REPAIR],
     latitude: -32.8908,
     longitude: -68.8458,
     isPromoted: false,
     isVerified: false,
     rating: 5.0,
     reviewCount: 0,
-    tags: []
+    tags: [],
+    email: '',
+    whatsapp: ''
   });
 
   const [tagInput, setTagInput] = useState('');
@@ -37,13 +40,11 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      // Determine if image is custom based on if it matches any default
       const isDefault = Object.values(CATEGORY_DEFAULT_IMAGES).includes(initialData.imageUrl);
       setIsCustomImage(!isDefault);
     }
   }, [initialData]);
 
-  // Logic to auto-change image when category changes, IF user hasn't uploaded a custom one
   useEffect(() => {
     if (!initialData && !isCustomImage && formData.category) {
       setFormData(prev => ({
@@ -99,8 +100,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
     setUploadError(null);
 
     if (file) {
-      // Validations
-      if (file.size > 800 * 1024) { // 800KB limit
+      if (file.size > 800 * 1024) { 
         setUploadError("La imagen es muy pesada. Máximo 800KB.");
         return;
       }
@@ -117,8 +117,8 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.title) {
-        alert("Por favor completa el nombre y el título del servicio.");
+    if (!formData.name || !formData.title || !formData.whatsapp) {
+        alert("Por favor completa el nombre, título y WhatsApp del servicio.");
         return;
     }
     
@@ -139,7 +139,9 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
       isVerified: isAdmin ? (formData.isVerified || true) : false,
       rating: formData.rating || 5.0,
       reviewCount: formData.reviewCount || 0,
-      tags: formData.tags || []
+      tags: formData.tags || [],
+      email: formData.email || '',
+      whatsapp: formData.whatsapp!
     };
 
     onSubmit(finalData);
@@ -203,11 +205,45 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
       </div>
 
       <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+        <h3 className="text-sm font-bold text-slate-700 uppercase mb-4 border-b border-slate-200 pb-2">Contacto Directo</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div>
+               <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                   <Phone className="w-4 h-4 text-emerald-600" /> WhatsApp / Celular
+               </label>
+               <input 
+                  required
+                  name="whatsapp"
+                  type="tel"
+                  value={formData.whatsapp}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500" 
+                  placeholder="+54 9 261 123456"
+               />
+               <p className="text-xs text-slate-500 mt-1">Será el número al que te contactarán los clientes.</p>
+           </div>
+           <div>
+               <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                   <Mail className="w-4 h-4 text-blue-600" /> Email de Contacto (Opcional)
+               </label>
+               <input 
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500" 
+                  placeholder="contacto@negocio.com"
+               />
+           </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
         <h3 className="text-sm font-bold text-slate-700 uppercase mb-4 border-b border-slate-200 pb-2">Imagen de Portada</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             <div className="md:col-span-2 space-y-4">
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-2">Subir Foto / Logo (Opcional)</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-2">Subir Foto / Logo</label>
                    <div className="flex items-center gap-2">
                        <label className="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-colors">
                            <Upload className="w-4 h-4" />
@@ -243,18 +279,12 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit,
                             alt="Preview" 
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                                // Fallback if url is broken
                                 (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Error';
                             }}
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400">
                             <ImageIcon className="w-8 h-8" />
-                        </div>
-                    )}
-                    {!isCustomImage && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-1">
-                            Imagen por defecto
                         </div>
                     )}
                 </div>
