@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
 import { ServiceCard } from './components/ServiceCard';
-import { MarketStats } from './components/MarketStats';
 import { AdCard, SidebarAd } from './components/AdCard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ServiceForm } from './components/ServiceForm';
@@ -12,7 +11,7 @@ import { AuthModal } from './components/AuthModal';
 import { UserProfile } from './components/UserProfile';
 import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS, CATEGORY_DEFAULT_IMAGES } from './constants';
 import { Category, Professional, Coordinates, ViewMode, Advertisement, User, AuthMode, Review } from './types';
-import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X, Lock } from 'lucide-react';
+import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X, Lock, ExternalLink } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
 import { supabase } from './services/supabase';
 
@@ -273,6 +272,10 @@ const App: React.FC = () => {
     setFilteredPros([...result]);
   }, [selectedCategory, searchQuery, selectedDepartment, userLocation, professionals]);
 
+  // Select ads for banners
+  const topBannerAd = ads.length > 0 ? ads[0] : null;
+  const bottomBannerAd = ads.length > 1 ? ads[1] : (ads.length > 0 ? ads[0] : null);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-16">
       <Header 
@@ -345,7 +348,28 @@ const App: React.FC = () => {
       ) : (
         /* HOME VIEW (SEARCH) */
         <>
-        <div className="bg-slate-900 pt-16 pb-24 px-4 relative overflow-hidden flex-shrink-0">
+        {/* TOP BANNER AD (FIXED BELOW MENU) */}
+        <div className="bg-slate-50 pt-16">
+            {topBannerAd && (
+                 <div className="max-w-7xl mx-auto px-4 py-2">
+                     <a href={topBannerAd.linkUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden rounded-xl shadow-md group">
+                         <div className="h-20 sm:h-24 overflow-hidden relative">
+                             <img src={topBannerAd.imageUrl} alt={topBannerAd.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                             <div className="absolute inset-0 bg-black/40 flex items-center px-6">
+                                 <div>
+                                     <span className="text-amber-400 font-bold text-xs uppercase tracking-wider">{topBannerAd.advertiserName}</span>
+                                     <h3 className="text-white font-bold text-lg leading-tight">{topBannerAd.title}</h3>
+                                 </div>
+                                 <ExternalLink className="w-5 h-5 text-white ml-auto opacity-70 group-hover:opacity-100" />
+                             </div>
+                             <div className="absolute top-1 right-1 bg-white/20 text-[9px] text-white px-1.5 rounded uppercase font-bold">Publicidad</div>
+                         </div>
+                     </a>
+                 </div>
+            )}
+        </div>
+
+        <div className="bg-slate-900 py-12 px-4 relative overflow-hidden flex-shrink-0">
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0 100 L100 0 L0 0 Z" fill="white" /></svg>
             </div>
@@ -378,14 +402,13 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        <main className="max-w-[1600px] mx-auto px-4 -mt-12 relative z-20 flex-grow pb-16">
+        <main className="max-w-[1600px] mx-auto px-4 -mt-12 relative z-20 flex-grow">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <aside className="hidden lg:block lg:col-span-3 xl:col-span-2 space-y-6">
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 sticky top-24">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 sticky top-48">
                     <div className="mb-6"><label className="block text-xs font-bold text-slate-500 uppercase mb-2">Departamento</label><select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm">{DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}<option value="Todos">Todos</option></select></div>
                     <div className="space-y-1">{Object.values(Category).map(cat => <button key={cat} onClick={() => setSelectedCategory(cat)} className={`w-full text-left px-3 py-2 rounded-lg text-sm ${selectedCategory === cat ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}>{cat}</button>)}</div>
                 </div>
-                <MarketStats />
             </aside>
 
             <section className="lg:col-span-9 xl:col-span-8">
@@ -422,14 +445,33 @@ const App: React.FC = () => {
             </section>
 
             <aside className="hidden xl:block xl:col-span-2 space-y-6">
-                <div className="sticky top-24 space-y-6">
+                <div className="sticky top-48 space-y-6">
                     {ads.filter(a => a.position === 'sidebar').map(ad => <SidebarAd key={ad.id} ad={ad} isAdmin={isAdmin} />)}
                 </div>
             </aside>
             </div>
+            
+            {/* BOTTOM BANNER (ABAJO DE TODO) */}
+            {bottomBannerAd && (
+                <div className="mt-16 mb-8 max-w-5xl mx-auto">
+                    <a href={bottomBannerAd.linkUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden rounded-2xl shadow-lg group h-48 sm:h-64">
+                        <img src={bottomBannerAd.imageUrl} alt={bottomBannerAd.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent flex flex-col justify-center px-8 sm:px-12">
+                            <span className="text-amber-400 font-bold uppercase tracking-wider text-sm mb-2">{bottomBannerAd.advertiserName}</span>
+                            <h3 className="text-3xl font-extrabold text-white mb-4 leading-tight max-w-md">{bottomBannerAd.title}</h3>
+                            <div className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-4 py-2 rounded-lg self-start text-sm hover:bg-slate-100 transition-colors">
+                                Ver Más <ArrowRight className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur px-2 py-1 rounded text-[10px] text-white font-bold uppercase border border-white/30">
+                            Publicidad
+                        </div>
+                    </a>
+                </div>
+            )}
         </main>
         
-        <footer className="bg-slate-900 text-slate-300 py-12">
+        <footer className="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
             <div className="max-w-7xl mx-auto px-4 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-8">
                 <div>
                     <h3 className="text-2xl font-bold text-white mb-2">¿Ofreces un servicio?</h3>
