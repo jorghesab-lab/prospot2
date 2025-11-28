@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Share2, X, Lock, LayoutDashboard, UserCircle, LogOut } from 'lucide-react';
+import { Briefcase, Share2, X, Lock, LayoutDashboard, UserCircle, LogOut, User as UserIcon } from 'lucide-react';
 import { User } from '../types';
 
 interface HeaderProps {
@@ -14,12 +14,13 @@ interface HeaderProps {
   currentUser: User | null;
   onOpenLogin: () => void;
   onLogout: () => void;
-  adminPasswordHash: string; // Passed from App state
+  onGoToProfile: () => void; // New prop
+  adminPasswordHash: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   onAdminLogin, isAdmin, onOpenPublishModal, onOpenAdminPanel, onGoToProfessionals, onGoHome,
-  currentUser, onOpenLogin, onLogout, adminPasswordHash
+  currentUser, onOpenLogin, onLogout, onGoToProfile, adminPasswordHash
 }) => {
   const [clickCount, setClickCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -88,36 +89,6 @@ export const Header: React.FC<HeaderProps> = ({
 
             <nav className="hidden md:flex space-x-8 items-center">
               <button onClick={onGoHome} className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Inicio</button>
-              {/* "Explorar" functionality now mapped to onGoToProfessionals which in App.tsx maps to HOME (Search) for this prop usage? 
-                  Wait, App.tsx passes onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}. 
-                  And onGoHome={() => setViewMode('PROFESSIONALS_LANDING')}.
-                  We need a button to go to SEARCH. 
-                  Let's re-map: In Header, "Explorar" is the Search. 
-                  We will add a prop or repurpose. 
-                  Actually, typically the "ProSpot" Logo goes to Landing. "Explorar" goes to Search.
-                  App.tsx implementation:
-                    onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}
-                    onGoHome={() => setViewMode('PROFESSIONALS_LANDING')}
-                  
-                  We need to navigate to SEARCH. I will update this file to assume 'onStartSearching' prop or similar,
-                  but to keep interface clean I will use onGoToProfessionals to mean "Landing" and I need a way to go to Search.
-                  
-                  Wait, looking at App.tsx again:
-                   onGoHome={() => setViewMode('PROFESSIONALS_LANDING')} 
-                   onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}
-                   
-                  There is no prop currently passed to Header to go to 'HOME' (Search).
-                  I will change the 'onGoToProfessionals' prop name/usage in the next iteration or just piggyback.
-                  
-                  Let's just use onOpenPublishModal logic... no.
-                  I will add a custom navigation button in the Header that calls a new prop? 
-                  No, I can't change App.tsx props easily without changing the interface.
-                  
-                  Actually, I'll rely on the ProfessionalsLanding page to drive traffic to search. 
-                  But the header "Explorar" button needs to work.
-                  I will modify App.tsx to pass `onGoToSearch={() => setViewMode('HOME')}`.
-                  But since I am restricted to the XML output, I will update Header props.
-              */}
             </nav>
 
             <div className="flex items-center gap-4">
@@ -127,7 +98,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Show Publish button ONLY if user is a Provider or Admin */}
               {(isAdmin || currentUser?.role === 'PROVIDER') && (
                   <button 
                     onClick={onOpenPublishModal}
@@ -140,13 +110,15 @@ export const Header: React.FC<HeaderProps> = ({
               
               {currentUser ? (
                 <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                    <div className="flex items-center gap-2 cursor-pointer group relative" onClick={onGoToProfile}>
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold group-hover:bg-blue-200 transition-colors">
                             {currentUser.name.charAt(0)}
                         </div>
-                        <div className="hidden sm:block text-xs">
+                        <div className="hidden sm:block text-xs group-hover:text-blue-600">
                             <p className="font-bold text-slate-800">{currentUser.name}</p>
-                            <p className="text-slate-500 capitalize">{currentUser.role === 'PROVIDER' ? 'Profesional' : 'Usuario'}</p>
+                            <p className="text-slate-500 capitalize flex items-center gap-1">
+                                {currentUser.role === 'PROVIDER' ? 'Profesional' : 'Usuario'} <UserIcon className="w-3 h-3" />
+                            </p>
                         </div>
                     </div>
                     <button onClick={onLogout} title="Cerrar Sesión" className="text-slate-400 hover:text-red-500">
@@ -165,7 +137,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Secret Login Modal */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">

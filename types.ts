@@ -58,7 +58,7 @@ export interface Coordinates {
   longitude: number;
 }
 
-export type ViewMode = 'HOME' | 'ADMIN_DASHBOARD' | 'PROFESSIONALS_LANDING';
+export type ViewMode = 'HOME' | 'ADMIN_DASHBOARD' | 'PROFESSIONALS_LANDING' | 'USER_PROFILE';
 
 // --- AUTH & USER TYPES ---
 
@@ -71,7 +71,16 @@ export interface User {
   role: UserRole;
   phone?: string;    // Only for Providers
   address?: string;  // Only for Providers
-  contactHistory?: string[]; // IDs of professionals contacted
+  contactHistory: string[]; // IDs of professionals contacted
+  createdAt: string;
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  professionalId: string;
+  rating: number;
+  comment: string;
   createdAt: string;
 }
 

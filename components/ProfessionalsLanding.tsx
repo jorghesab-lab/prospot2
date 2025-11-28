@@ -1,12 +1,14 @@
 
 import React from 'react';
-import { Sparkles, MapPin, ShieldCheck, ArrowRight, ArrowLeft, Search, HeartHandshake, Quote, CheckCircle, Scale, TrendingUp } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Sparkles, MapPin, HeartHandshake, ArrowRight, Search, TrendingUp, Quote, Scale, ExternalLink } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, LabelList } from 'recharts';
+import { Advertisement } from '../types';
 
 interface ProfessionalsLandingProps {
   onRegister: () => void;
   onBack: () => void;
   onStartSearching?: () => void;
+  ads: Advertisement[];
 }
 
 const data = [
@@ -18,8 +20,11 @@ const data = [
   { name: 'Mes 6', consultas: 4800 },
 ];
 
-export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRegister, onBack, onStartSearching }) => {
+export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRegister, onBack, onStartSearching, ads }) => {
   const handleSearchClick = onStartSearching || onBack;
+
+  // Pick the first ad available to show as a banner, preferably feed or create logic for 'banner'
+  const bannerAd = ads.length > 0 ? ads[0] : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -43,7 +48,7 @@ export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRe
         </div>
       </div>
 
-      {/* Impact & Reach Section (NEW) */}
+      {/* Impact & Reach Section */}
       <div className="bg-white py-16 px-4 border-b border-slate-200">
         <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -77,27 +82,35 @@ export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRe
                     </button>
                 </div>
 
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-inner">
-                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 text-center">Proyección de Consultas Mensuales</h3>
-                    <div className="h-64 w-full">
+                <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 shadow-inner">
+                    <div className="mb-6 flex justify-between items-end">
+                        <h3 className="text-sm font-bold text-slate-600 uppercase">Crecimiento de Consultas</h3>
+                        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">+400% Digital</span>
+                    </div>
+                    <div className="h-48 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data}>
+                            <BarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="colorConsultas" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.8}/>
-                                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                                    <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#2563eb" stopOpacity={1}/>
+                                        <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.8}/>
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
                                 <YAxis hide />
                                 <Tooltip 
+                                    cursor={{fill: 'transparent'}}
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
-                                <Area type="monotone" dataKey="consultas" stroke="#2563eb" fillOpacity={1} fill="url(#colorConsultas)" strokeWidth={3} />
-                            </AreaChart>
+                                <ReferenceLine y={500} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'insideTopRight', value: 'Alcance Tradicional', fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
+                                <Bar dataKey="consultas" fill="url(#colorBar)" radius={[4, 4, 0, 0]} barSize={24}>
+                                  <LabelList dataKey="consultas" position="top" style={{ fill: '#2563eb', fontSize: 10, fontWeight: 'bold' }} formatter={(value: number) => value > 1000 ? `+${(value/1000).toFixed(1)}k` : value} />
+                                </Bar>
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
+                    <p className="text-center text-xs text-slate-400 mt-4">Proyección estimada basada en perfiles optimizados primeros 6 meses.</p>
                 </div>
             </div>
         </div>
@@ -137,7 +150,7 @@ export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRe
       <div className="bg-slate-100 py-16 px-4">
         <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-slate-900 text-center mb-12">Lo que dicen en Mendoza</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 {[
                     {
                         name: "Mariana L.",
@@ -171,6 +184,29 @@ export const ProfessionalsLanding: React.FC<ProfessionalsLandingProps> = ({ onRe
                     </div>
                 ))}
             </div>
+
+            {/* --- AD BANNER SECTION --- */}
+            {bannerAd && (
+                <div className="max-w-4xl mx-auto transform hover:scale-[1.01] transition-transform duration-300">
+                    <a href={bannerAd.linkUrl} target="_blank" rel="noopener noreferrer" className="block relative overflow-hidden rounded-2xl shadow-xl group">
+                        <img 
+                            src={bannerAd.imageUrl} 
+                            alt={bannerAd.title} 
+                            className="w-full h-48 md:h-64 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center px-8 md:px-16">
+                            <span className="text-amber-400 font-bold uppercase tracking-wider text-sm mb-2">{bannerAd.advertiserName}</span>
+                            <h3 className="text-2xl md:text-4xl font-extrabold text-white mb-4 leading-tight max-w-lg">{bannerAd.title}</h3>
+                            <div className="inline-flex items-center gap-2 bg-white text-slate-900 font-bold px-4 py-2 rounded-lg self-start">
+                                Ver Promo <ExternalLink className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur px-2 py-1 rounded text-[10px] text-white font-bold uppercase border border-white/30">
+                            Publicidad
+                        </div>
+                    </a>
+                </div>
+            )}
         </div>
       </div>
 

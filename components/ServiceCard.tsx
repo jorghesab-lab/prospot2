@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Star, MapPin, CheckCircle, Clock, Map, Pencil, Trash2 } from 'lucide-react';
 import { Professional } from '../types';
@@ -6,13 +7,24 @@ interface ServiceCardProps {
   professional: Professional;
   distance?: number | null;
   isAdmin?: boolean;
+  onContact?: (proId: string) => void;
 }
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance, isAdmin }) => {
+export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance, isAdmin, onContact }) => {
   const openInMaps = () => {
-    // Opens Google Maps strictly at the coordinates provided in the database.
-    // This ensures we show the "Admin/Form" location, not a random Google Maps search.
     window.open(`https://www.google.com/maps/search/?api=1&query=${professional.latitude},${professional.longitude}`, '_blank');
+  };
+
+  const handleContact = () => {
+      // Open WhatsApp
+      if (professional.whatsapp) {
+          const message = `Hola ${professional.name}, te vi en ProSpot y me interesa tu servicio.`;
+          window.open(`https://wa.me/${professional.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(message)}`, '_blank');
+      }
+      // Record History in App
+      if (onContact) {
+          onContact(professional.id);
+      }
   };
 
   return (
@@ -114,7 +126,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
                 <Map className="w-4 h-4" />
                 Ver Mapa
              </button>
-             <button className="w-full bg-blue-600 border border-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm shadow-sm">
+             <button onClick={handleContact} className="w-full bg-blue-600 border border-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm shadow-sm">
                Contactar
              </button>
           </div>

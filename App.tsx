@@ -9,8 +9,9 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ServiceForm } from './components/ServiceForm';
 import { ProfessionalsLanding } from './components/ProfessionalsLanding';
 import { AuthModal } from './components/AuthModal';
+import { UserProfile } from './components/UserProfile';
 import { MOCK_PROFESSIONALS, DEPARTMENTS, MOCK_ADS, CATEGORY_DEFAULT_IMAGES } from './constants';
-import { Category, Professional, Coordinates, ViewMode, Advertisement, User, AuthMode } from './types';
+import { Category, Professional, Coordinates, ViewMode, Advertisement, User, AuthMode, Review } from './types';
 import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X, Lock } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
 import { supabase } from './services/supabase';
@@ -19,13 +20,14 @@ const App: React.FC = () => {
   // --- AUTH STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]); // Mock User DB
-  const [adminPassword, setAdminPassword] = useState('admin123'); // Default admin pass
+  const [users, setUsers] = useState<User[]>([]); 
+  const [adminPassword, setAdminPassword] = useState('admin123');
   
   // --- APP STATE ---
-  const [viewMode, setViewMode] = useState<ViewMode>('PROFESSIONALS_LANDING'); // INITIAL VIEW CHANGED
+  const [viewMode, setViewMode] = useState<ViewMode>('PROFESSIONALS_LANDING'); 
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [ads, setAds] = useState<Advertisement[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   // --- MODAL STATE ---
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -41,6 +43,9 @@ const App: React.FC = () => {
 
       const savedUsers = localStorage.getItem('prospot_users');
       if (savedUsers) setUsers(JSON.parse(savedUsers));
+
+      const savedReviews = localStorage.getItem('prospot_reviews');
+      if (savedReviews) setReviews(JSON.parse(savedReviews));
 
       // 2. Load Services/Ads (Hybrid)
       if (supabase) {
@@ -99,6 +104,9 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('prospot_admin_pass', adminPassword);
   }, [adminPassword]);
+  useEffect(() => {
+    localStorage.setItem('prospot_reviews', JSON.stringify(reviews));
+  }, [reviews]);
 
   // --- SEARCH STATE ---
   const [selectedCategory, setSelectedCategory] = useState<Category>(Category.ALL);
@@ -109,27 +117,58 @@ const App: React.FC = () => {
   const [isLocating, setIsLocating] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
 
   // --- AUTH ACTIONS ---
   const handleLogin = (user: User) => {
     // Check if user exists in our "DB", if not add them
-    const existing = users.find(u => u.email === user.email);
-    if (!existing) {
+    const existingIndex = users.findIndex(u => u.email === user.email);
+    let finalUser = user;
+    
+    if (existingIndex === -1) {
         setUsers(prev => [...prev, user]);
+    } else {
+        // If exists, load their full profile (history, id, etc)
+        finalUser = users[existingIndex];
     }
-    setCurrentUser(user);
+    setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setIsAdmin(false);
-    setViewMode('PROFESSIONALS_LANDING'); // Go back to landing on logout if desired, or stay home
+    setViewMode('PROFESSIONALS_LANDING'); 
   };
 
   const handleDeleteUser = (id: string) => {
       setUsers(prev => prev.filter(u => u.id !== id));
+  };
+
+  // --- CONTACT HISTORY LOGIC ---
+  const handleContactProfessional = (proId: string) => {
+      if (!currentUser) return; // Should allow guest? No, requireAuth handled view.
+      
+      // Prevent duplicates in history
+      if (!currentUser.contactHistory.includes(proId)) {
+          const updatedUser = { ...currentUser, contactHistory: [...currentUser.contactHistory, proId] };
+          setCurrentUser(updatedUser);
+          setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+      }
+  };
+
+  // --- REVIEWS LOGIC ---
+  const handleSubmitReview = (proId: string, rating: number, comment: string) => {
+      if (!currentUser) return;
+      const newReview: Review = {
+          id: Date.now().toString(),
+          userId: currentUser.id,
+          professionalId: proId,
+          rating,
+          comment,
+          createdAt: new Date().toISOString()
+      };
+      setReviews(prev => [...prev, newReview]);
+      alert("¡Gracias por tu calificación!");
   };
 
   // --- CORE FEATURES BLOCKED IF NOT LOGGED IN ---
@@ -242,10 +281,11 @@ const App: React.FC = () => {
         onOpenPublishModal={() => setIsPublishModalOpen(true)}
         onOpenAdminPanel={() => setViewMode('ADMIN_DASHBOARD')}
         onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}
-        onGoHome={() => setViewMode('PROFESSIONALS_LANDING')} // Logo goes to Landing
+        onGoHome={() => setViewMode('PROFESSIONALS_LANDING')} 
         currentUser={currentUser}
         onOpenLogin={() => { setAuthMode('LOGIN'); setIsAuthModalOpen(true); }}
         onLogout={handleLogout}
+        onGoToProfile={() => setViewMode('USER_PROFILE')}
         adminPasswordHash={adminPassword}
       />
 
@@ -287,11 +327,20 @@ const App: React.FC = () => {
             onChangeAdminPassword={setAdminPassword}
             onClose={() => setViewMode('PROFESSIONALS_LANDING')}
         />
+      ) : viewMode === 'USER_PROFILE' && currentUser ? (
+        <UserProfile 
+            user={currentUser}
+            professionals={professionals}
+            reviews={reviews}
+            onSubmitReview={handleSubmitReview}
+            onGoHome={() => setViewMode('HOME')}
+        />
       ) : viewMode === 'PROFESSIONALS_LANDING' ? (
         <ProfessionalsLanding 
             onRegister={() => { setAuthMode('REGISTER_PROVIDER'); setIsAuthModalOpen(true); }}
             onStartSearching={() => setViewMode('HOME')}
-            onBack={() => setViewMode('HOME')} // Legacy prop, used for switching
+            onBack={() => setViewMode('HOME')} 
+            ads={ads}
         />
       ) : (
         /* HOME VIEW (SEARCH) */
@@ -313,7 +362,7 @@ const App: React.FC = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-                        onClick={() => requireAuth(() => {})} // Prompt login on click
+                        onClick={() => requireAuth(() => {})} 
                     />
                 </div>
                 <div className="flex gap-2">
@@ -340,7 +389,6 @@ const App: React.FC = () => {
             </aside>
 
             <section className="lg:col-span-9 xl:col-span-8">
-                {/* BLOCKED CONTENT IF NOT LOGGED IN */}
                 {(!currentUser && !isAdmin) ? (
                     <div className="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm mt-8">
                         <Lock className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -352,7 +400,6 @@ const App: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    /* LOGGED IN VIEW */
                     <>
                         <div className="lg:hidden space-y-4 mb-6">
                             <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
@@ -364,6 +411,7 @@ const App: React.FC = () => {
                                         professional={pro} 
                                         distance={userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, pro.latitude, pro.longitude) : null}
                                         isAdmin={isAdmin}
+                                        onContact={handleContactProfessional}
                                     />
                                     {index === 2 && (ads.filter(a => a.position === 'feed')[0]) && <AdCard ad={ads.filter(a => a.position === 'feed')[0]} isAdmin={isAdmin} />}
                                 </React.Fragment>
