@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Professional, Category, Advertisement, User } from '../types';
 import { ServiceForm } from './ServiceForm';
 import { AdForm } from './AdForm';
-import { Trash2, Pencil, Search, Upload, Plus, FileSpreadsheet, Megaphone, Users, Shield, Key } from 'lucide-react';
+import { Trash2, Pencil, Search, Upload, Plus, FileSpreadsheet, Megaphone, Users, Shield, Key, Sparkles, CheckCircle, AlertCircle } from 'lucide-react';
 import { DEPARTMENTS } from '../constants';
 
 interface AdminDashboardProps {
@@ -35,6 +35,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [csvText, setCsvText] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // Check if API Key is present (This check happens at build time for client-side apps, 
+  // but acts as a good indicator if the env var was injected correctly)
+  const isAiConfigured = !!process.env.API_KEY;
 
   // LIST TAB LOGIC
   const filteredPros = professionals.filter(p => 
@@ -273,36 +277,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* SETTINGS TAB */}
         {activeTab === 'SETTINGS' && (
-            <div className="max-w-xl mx-auto">
-                 <h2 className="text-xl font-bold mb-4">Seguridad de Administrador</h2>
-                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                     <label className="block text-sm font-bold text-slate-700 mb-2">Cambiar Contraseña Maestra</label>
-                     <div className="flex gap-2">
-                         <input 
-                            type="text"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
-                            placeholder="Nueva contraseña..."
-                         />
-                         <button 
-                            onClick={() => {
-                                if (newPassword.trim().length > 3) {
-                                    onChangeAdminPassword(newPassword.trim());
-                                    alert('Contraseña actualizada correctamente.');
-                                    setNewPassword('');
-                                } else {
-                                    alert('La contraseña debe tener al menos 4 caracteres.');
-                                }
-                            }}
-                            className="bg-slate-900 text-white px-4 py-2 rounded font-bold hover:bg-slate-800"
-                         >
-                             Actualizar
-                         </button>
-                     </div>
-                     <p className="text-xs text-slate-500 mt-2">
-                         Esta contraseña se usa para entrar al modo oculto (5 clicks en logo).
-                     </p>
+            <div className="max-w-xl mx-auto space-y-6">
+                 <div>
+                    <h2 className="text-xl font-bold mb-4">Estado del Sistema</h2>
+                    <div className={`p-4 rounded-xl border flex items-center gap-4 ${isAiConfigured ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                        <div className={`p-2 rounded-full ${isAiConfigured ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            {isAiConfigured ? <Sparkles className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+                        </div>
+                        <div>
+                            <h4 className={`font-bold ${isAiConfigured ? 'text-emerald-800' : 'text-red-800'}`}>
+                                {isAiConfigured ? 'Inteligencia Artificial Activa' : 'IA No Configurada'}
+                            </h4>
+                            <p className="text-xs text-slate-600 mt-1">
+                                {isAiConfigured 
+                                    ? 'La API Key está instalada. El buscador inteligente y la generación de contenido funcionarán con Google Gemini.'
+                                    : 'Falta la API_KEY en Vercel. La app está usando modo simulación. Agrega la clave para activar la IA real.'}
+                            </p>
+                        </div>
+                    </div>
+                 </div>
+
+                 <div className="border-t border-slate-200 pt-6">
+                    <h2 className="text-xl font-bold mb-4">Seguridad de Administrador</h2>
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Cambiar Contraseña Maestra</label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+                                placeholder="Nueva contraseña..."
+                            />
+                            <button 
+                                onClick={() => {
+                                    if (newPassword.trim().length > 3) {
+                                        onChangeAdminPassword(newPassword.trim());
+                                        alert('Contraseña actualizada correctamente.');
+                                        setNewPassword('');
+                                    } else {
+                                        alert('La contraseña debe tener al menos 4 caracteres.');
+                                    }
+                                }}
+                                className="bg-slate-900 text-white px-4 py-2 rounded font-bold hover:bg-slate-800"
+                            >
+                                Actualizar
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Esta contraseña se usa para entrar al modo oculto (5 clicks en logo).
+                        </p>
+                    </div>
                  </div>
             </div>
         )}
