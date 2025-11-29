@@ -111,9 +111,17 @@ export const Header: React.FC<HeaderProps> = ({
               {currentUser ? (
                 <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
                     <div className="flex items-center gap-2 cursor-pointer group relative" onClick={onGoToProfile}>
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold group-hover:bg-blue-200 transition-colors">
-                            {currentUser.name.charAt(0)}
-                        </div>
+                        {currentUser.photoUrl ? (
+                             <img 
+                                src={currentUser.photoUrl} 
+                                alt={currentUser.name} 
+                                className="w-9 h-9 rounded-full object-cover border-2 border-slate-100 shadow-sm group-hover:border-blue-300 transition-colors"
+                             />
+                        ) : (
+                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold group-hover:bg-blue-200 transition-colors">
+                                {currentUser.name.charAt(0)}
+                            </div>
+                        )}
                         <div className="hidden sm:block text-xs group-hover:text-blue-600">
                             <p className="font-bold text-slate-800">{currentUser.name}</p>
                             <p className="text-slate-500 capitalize flex items-center gap-1">

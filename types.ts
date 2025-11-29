@@ -74,6 +74,7 @@ export interface User {
   contactHistory: string[]; // IDs of professionals contacted
   favorites: string[]; // IDs of favorite professionals
   createdAt: string;
+  photoUrl?: string; // Google Profile Photo
 }
 
 export interface Review {

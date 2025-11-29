@@ -62,6 +62,12 @@ const App: React.FC = () => {
       const savedReviews = localStorage.getItem('prospot_reviews');
       if (savedReviews) setReviews(JSON.parse(savedReviews));
 
+      // NEW: Check for Active Session
+      const sessionUser = localStorage.getItem('prospot_current_session');
+      if (sessionUser) {
+          setCurrentUser(JSON.parse(sessionUser));
+      }
+
       // 2. Load Services/Ads (Hybrid)
       if (supabase && !shouldForceReload) {
           // If we have supabase connection and didn't just force a reset
@@ -137,6 +143,14 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('prospot_reviews', JSON.stringify(reviews));
   }, [reviews]);
+  // NEW: Persist Current Session
+  useEffect(() => {
+    if (currentUser) {
+        localStorage.setItem('prospot_current_session', JSON.stringify(currentUser));
+    } else {
+        localStorage.removeItem('prospot_current_session');
+    }
+  }, [currentUser]);
 
   // --- SEARCH STATE ---
   const [selectedCategory, setSelectedCategory] = useState<Category>(Category.ALL);
@@ -161,10 +175,12 @@ const App: React.FC = () => {
         finalUser = users[existingIndex];
         // Ensure favorites array exists for old users
         if (!finalUser.favorites) finalUser.favorites = [];
+        // Ensure photo exists if google user
+        if (user.photoUrl && !finalUser.photoUrl) finalUser.photoUrl = user.photoUrl;
     }
     setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
-    // If just registered/logged in and is provider, maybe prompt to create service?
+    
     if (finalUser.role === 'PROVIDER') setViewMode('USER_PROFILE'); 
     else setViewMode('HOME');
   };
@@ -173,6 +189,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     setIsAdmin(false);
     setViewMode('PROFESSIONALS_LANDING'); 
+    localStorage.removeItem('prospot_current_session');
   };
 
   const handleDeleteUser = (id: string) => {
