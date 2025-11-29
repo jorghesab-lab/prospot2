@@ -72,6 +72,7 @@ export interface User {
   phone?: string;    // Only for Providers
   address?: string;  // Only for Providers
   contactHistory: string[]; // IDs of professionals contacted
+  favorites: string[]; // IDs of favorite professionals
   createdAt: string;
 }
 

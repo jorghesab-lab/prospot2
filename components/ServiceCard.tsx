@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Star, MapPin, CheckCircle, Clock, Map, Pencil, Trash2, MessageSquare } from 'lucide-react';
+import { Star, MapPin, CheckCircle, Clock, Map, Pencil, Trash2, MessageSquare, Heart } from 'lucide-react';
 import { Professional } from '../types';
 
 interface ServiceCardProps {
@@ -8,14 +8,31 @@ interface ServiceCardProps {
   distance?: number | null;
   isAdmin?: boolean;
   onContact?: (proId: string) => void;
+  isAuthenticated?: boolean;
+  onRequireAuth?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (proId: string) => void;
 }
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance, isAdmin, onContact }) => {
+export const ServiceCard: React.FC<ServiceCardProps> = ({ 
+    professional, distance, isAdmin, onContact, 
+    isAuthenticated = false, onRequireAuth,
+    isFavorite = false, onToggleFavorite 
+}) => {
   const openInMaps = () => {
+    if (!isAuthenticated && onRequireAuth) {
+        onRequireAuth();
+        return;
+    }
     window.open(`https://www.google.com/maps/search/?api=1&query=${professional.latitude},${professional.longitude}`, '_blank');
   };
 
   const handleContact = () => {
+      if (!isAuthenticated && onRequireAuth) {
+          onRequireAuth();
+          return;
+      }
+
       // Open WhatsApp
       if (professional.whatsapp) {
           const message = `Hola ${professional.name}, te vi en ProSpot y me interesa tu servicio.`;
@@ -24,6 +41,13 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
       // Record History in App
       if (onContact) {
           onContact(professional.id);
+      }
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onToggleFavorite) {
+          onToggleFavorite(professional.id);
       }
   };
 
@@ -46,6 +70,17 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
         </div>
       )}
 
+      {/* Favorite Button (For Users) */}
+      {!isAdmin && onToggleFavorite && (
+         <button 
+            onClick={handleFavoriteClick}
+            className="absolute top-3 right-3 z-30 bg-white/90 p-2 rounded-full shadow-sm border border-slate-100 transition-all hover:scale-110 active:scale-95"
+            title={isFavorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+         >
+             <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-slate-400 hover:text-red-500'}`} />
+         </button>
+      )}
+
       {/* Promoted Badge */}
       {professional.isPromoted && (
         <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-xs font-bold px-3 py-1 text-center tracking-wider shadow-sm uppercase">
@@ -62,7 +97,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
             (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/600x400/f1f5f9/64748b?text=Imagen+No+Disponible';
           }}
         />
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-700 shadow-sm border border-slate-100 mt-6 md:mt-0">
+        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-700 shadow-sm border border-slate-100 mt-6 md:mt-0 lg:mt-6 xl:mt-0">
           {professional.priceRange}
         </div>
         {professional.isVerified && (
@@ -105,7 +140,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
                 <span className="truncate max-w-[150px]" title={professional.location}>
-                  {professional.location} ({professional.department})
+                  {isAuthenticated ? `${professional.location} (${professional.department})` : `${professional.department} - Dirección oculta...`}
                 </span>
               </div>
               {distance !== undefined && distance !== null && distance !== Infinity && (
@@ -127,7 +162,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
               className="flex items-center justify-center gap-2 w-full bg-slate-50 border border-slate-200 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-100 hover:text-slate-900 transition-colors text-sm"
              >
                 <Map className="w-4 h-4" />
-                Ver Mapa
+                {isAuthenticated ? 'Ver Mapa' : 'Ver Mapa'}
              </button>
              <button onClick={handleContact} className="w-full bg-blue-600 border border-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm shadow-sm flex items-center justify-center gap-1">
                <MessageSquare className="w-4 h-4" /> Contactar

@@ -30,7 +30,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
         email: 'usuario@gmail.com', // In a real app, this comes from Google
         role: 'USER',
         createdAt: new Date().toISOString(),
-        contactHistory: []
+        contactHistory: [],
+        favorites: []
     };
     onLogin(googleUser);
     onClose();
@@ -47,7 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
       phone: formData.phone,
       address: formData.address,
       createdAt: new Date().toISOString(),
-      contactHistory: []
+      contactHistory: [],
+      favorites: []
     };
 
     onLogin(newProvider);

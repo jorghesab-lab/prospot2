@@ -159,6 +159,8 @@ const App: React.FC = () => {
     } else {
         // If exists, load their full profile (history, id, etc)
         finalUser = users[existingIndex];
+        // Ensure favorites array exists for old users
+        if (!finalUser.favorites) finalUser.favorites = [];
     }
     setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
@@ -184,6 +186,28 @@ const App: React.FC = () => {
           setCurrentUser(updatedUser);
           setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
       }
+  };
+
+  // --- FAVORITES LOGIC ---
+  const handleToggleFavorite = (proId: string) => {
+      if (!currentUser) {
+          setAuthMode('LOGIN');
+          setIsAuthModalOpen(true);
+          return;
+      }
+
+      const isFav = (currentUser.favorites || []).includes(proId);
+      let newFavorites = [];
+      
+      if (isFav) {
+          newFavorites = (currentUser.favorites || []).filter(id => id !== proId);
+      } else {
+          newFavorites = [...(currentUser.favorites || []), proId];
+      }
+
+      const updatedUser = { ...currentUser, favorites: newFavorites };
+      setCurrentUser(updatedUser);
+      setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
   // --- REVIEWS LOGIC ---
@@ -456,6 +480,8 @@ const App: React.FC = () => {
                                     onContact={() => requireAuth(() => handleContactProfessional(pro.id))} // Block Contact
                                     isAuthenticated={!!currentUser || isAdmin} // Pass auth state to card to hide address/map
                                     onRequireAuth={() => requireAuth(() => {})} // Pass auth trigger
+                                    isFavorite={(currentUser?.favorites || []).includes(pro.id)}
+                                    onToggleFavorite={handleToggleFavorite}
                                 />
                                 {index === 2 && (ads.filter(a => a.position === 'feed')[0]) && <AdCard ad={ads.filter(a => a.position === 'feed')[0]} isAdmin={isAdmin} />}
                             </React.Fragment>
