@@ -1,8 +1,10 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Category } from '../types';
 
 const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Initialize AI only if key exists to prevent immediate crash
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // Define the schema for the structured response
 const searchResponseSchema: Schema = {
@@ -43,7 +45,40 @@ const serviceContentSchema: Schema = {
   required: ["description", "tags"]
 };
 
+// --- FALLBACK / SIMULATION FUNCTIONS (Local Brain) ---
+
+const getSimulatedRecommendations = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    let cat = Category.ALL;
+    
+    if (lowerQuery.includes('auto') || lowerQuery.includes('mecanico') || lowerQuery.includes('freno') || lowerQuery.includes('rueda')) cat = Category.AUTOMOTIVE;
+    else if (lowerQuery.includes('luz') || lowerQuery.includes('cable') || lowerQuery.includes('enchufe')) cat = Category.HOME_REPAIR;
+    else if (lowerQuery.includes('agua') || lowerQuery.includes('caño') || lowerQuery.includes('gas')) cat = Category.HOME_REPAIR;
+    else if (lowerQuery.includes('diente') || lowerQuery.includes('dolor') || lowerQuery.includes('medico')) cat = Category.HEALTH;
+    else if (lowerQuery.includes('compu') || lowerQuery.includes('pc') || lowerQuery.includes('celular')) cat = Category.TECHNOLOGY;
+    else if (lowerQuery.includes('evento') || lowerQuery.includes('dj') || lowerQuery.includes('fiesta')) cat = Category.EVENTS;
+    else if (lowerQuery.includes('clase') || lowerQuery.includes('profe')) cat = Category.EDUCATION;
+    else if (lowerQuery.includes('contador') || lowerQuery.includes('impuesto')) cat = Category.BUSINESS;
+
+    return {
+        recommendedKeywords: [query, "Servicio Local", "Mendoza", cat],
+        targetCategory: cat,
+        reasoning: "Modo Simulado: Análisis de palabras clave locales."
+    };
+};
+
+const getSimulatedServiceContent = (businessName: string, category: string, title: string) => {
+    return {
+        description: `En ${businessName} nos especializamos en ${category}. Ofrecemos servicios de ${title} con la mejor atención y calidad en Mendoza. Contáctanos para recibir asesoramiento personalizado y soluciones rápidas.`,
+        tags: [category, "Mendoza", "Profesional", "Calidad", "Confianza"]
+    };
+};
+
+// --- MAIN EXPORTED FUNCTIONS ---
+
 export const getIntelligentRecommendations = async (userQuery: string) => {
+  if (!ai) return getSimulatedRecommendations(userQuery);
+
   try {
     const model = 'gemini-2.5-flash';
     
@@ -62,19 +97,16 @@ export const getIntelligentRecommendations = async (userQuery: string) => {
       }
     });
 
-    return response.text ? JSON.parse(response.text) : null;
+    return response.text ? JSON.parse(response.text) : getSimulatedRecommendations(userQuery);
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    // Fallback in case of API error
-    return {
-      recommendedKeywords: [userQuery],
-      targetCategory: Category.ALL,
-      reasoning: "No se pudo conectar con el asistente inteligente."
-    };
+    console.warn("Gemini API Error (Falling back to local):", error);
+    return getSimulatedRecommendations(userQuery);
   }
 };
 
 export const generateServiceContent = async (businessName: string, category: string, title: string) => {
+  if (!ai) return getSimulatedServiceContent(businessName, category, title);
+
   try {
      const model = 'gemini-2.5-flash';
      const response = await ai.models.generateContent({
@@ -93,9 +125,9 @@ export const generateServiceContent = async (businessName: string, category: str
        }
      });
 
-     return response.text ? JSON.parse(response.text) : null;
+     return response.text ? JSON.parse(response.text) : getSimulatedServiceContent(businessName, category, title);
   } catch (error) {
-    console.error("Error generating service content:", error);
-    return null;
+    console.warn("Gemini API Error (Falling back to local):", error);
+    return getSimulatedServiceContent(businessName, category, title);
   }
 };
