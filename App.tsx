@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
@@ -14,6 +13,7 @@ import { Category, Professional, Coordinates, ViewMode, Advertisement, User, Aut
 import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, ShieldCheck, LogOut, X, Lock, ExternalLink } from 'lucide-react';
 import { getIntelligentRecommendations } from './services/geminiService';
 import { supabase } from './services/supabase';
+import { Analytics } from "@vercel/analytics/react";
 
 // Change this version string whenever you update MOCK data in constants.ts to force a client refresh
 const DATA_VERSION = 'v4-ai-unlocked'; 
@@ -570,6 +570,7 @@ const App: React.FC = () => {
             </div>
         </div>
       )}
+      <Analytics />
     </div>
   );
 };
