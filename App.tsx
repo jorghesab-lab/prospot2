@@ -32,7 +32,7 @@ const App: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
 
   // --- MODAL STATE ---
-  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  // isPublishModalOpen REMOVED - Using full page view
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('LOGIN');
 
@@ -164,6 +164,9 @@ const App: React.FC = () => {
     }
     setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
+    // If just registered/logged in and is provider, maybe prompt to create service?
+    if (finalUser.role === 'PROVIDER') setViewMode('USER_PROFILE'); 
+    else setViewMode('HOME');
   };
 
   const handleLogout = () => {
@@ -272,9 +275,10 @@ const App: React.FC = () => {
   const handleAddProfessional = async (newPro: Professional) => {
     setProfessionals(prev => [newPro, ...prev]);
     if (supabase) await supabase.from('professionals').insert([newPro]);
+    
+    alert("¡Felicidades! Tu servicio ha sido publicado exitosamente.");
     if (!isAdmin) {
-        alert("¡Gracias! Tu servicio ha sido enviado.");
-        setIsPublishModalOpen(false);
+        setViewMode('USER_PROFILE'); // Go back to profile after publishing
     }
   };
   const handleUpdateProfessional = async (updatedPro: Professional) => {
@@ -334,7 +338,7 @@ const App: React.FC = () => {
       <Header 
         onAdminLogin={() => { setIsAdmin(true); setViewMode('ADMIN_DASHBOARD'); }} 
         isAdmin={isAdmin} 
-        onOpenPublishModal={() => setIsPublishModalOpen(true)}
+        onOpenPublishModal={() => setViewMode('CREATE_SERVICE')}
         onOpenAdminPanel={() => setViewMode('ADMIN_DASHBOARD')}
         onGoToProfessionals={() => setViewMode('PROFESSIONALS_LANDING')}
         onGoHome={() => setViewMode('PROFESSIONALS_LANDING')} 
@@ -351,20 +355,6 @@ const App: React.FC = () => {
             onClose={() => setIsAuthModalOpen(false)}
             initialMode={authMode} 
         />
-      )}
-
-      {isPublishModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
-                 <div className="flex justify-between items-center p-6 border-b border-slate-100">
-                     <h3 className="text-xl font-bold text-slate-900">Publicar Servicio</h3>
-                     <button onClick={() => setIsPublishModalOpen(false)} className="text-slate-400 hover:text-slate-800"><X className="w-6 h-6" /></button>
-                 </div>
-                 <div className="p-6">
-                    <ServiceForm onSubmit={handleAddProfessional} onCancel={() => setIsPublishModalOpen(false)} isAdmin={isAdmin} />
-                 </div>
-             </div>
-        </div>
       )}
 
       {/* --- VIEWS --- */}
@@ -390,7 +380,16 @@ const App: React.FC = () => {
             reviews={reviews}
             onSubmitReview={handleSubmitReview}
             onGoHome={() => setViewMode('HOME')}
+            onPublishService={() => setViewMode('CREATE_SERVICE')}
         />
+      ) : viewMode === 'CREATE_SERVICE' ? (
+        <div className="py-12 px-4 max-w-5xl mx-auto">
+            <ServiceForm 
+                onSubmit={handleAddProfessional} 
+                onCancel={() => setViewMode(currentUser ? 'USER_PROFILE' : 'HOME')} 
+                isAdmin={isAdmin} 
+            />
+        </div>
       ) : viewMode === 'PROFESSIONALS_LANDING' ? (
         <ProfessionalsLanding 
             onRegister={() => { setAuthMode('REGISTER_PROVIDER'); setIsAuthModalOpen(true); }}

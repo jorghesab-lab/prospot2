@@ -58,7 +58,7 @@ export interface Coordinates {
   longitude: number;
 }
 
-export type ViewMode = 'HOME' | 'ADMIN_DASHBOARD' | 'PROFESSIONALS_LANDING' | 'USER_PROFILE';
+export type ViewMode = 'HOME' | 'ADMIN_DASHBOARD' | 'PROFESSIONALS_LANDING' | 'USER_PROFILE' | 'CREATE_SERVICE';
 
 // --- AUTH & USER TYPES ---
 

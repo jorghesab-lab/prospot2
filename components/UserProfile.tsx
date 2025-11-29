@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Professional, Review } from '../types';
-import { Star, Clock, MapPin, MessageSquare, Heart, Bookmark, History, PenTool, LayoutGrid } from 'lucide-react';
+import { Star, Clock, MapPin, MessageSquare, Heart, Bookmark, History, PenTool, LayoutGrid, Plus, Briefcase, Settings } from 'lucide-react';
 import { ServiceCard } from './ServiceCard';
 
 interface UserProfileProps {
@@ -10,12 +10,13 @@ interface UserProfileProps {
   reviews: Review[];
   onSubmitReview: (proId: string, rating: number, comment: string) => void;
   onGoHome: () => void;
+  onPublishService: () => void; // Callback to switch view
 }
 
-type ProfileTab = 'HISTORY' | 'FAVORITES' | 'REVIEWS';
+type ProfileTab = 'HISTORY' | 'FAVORITES' | 'REVIEWS' | 'SERVICES';
 
-export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, reviews, onSubmitReview, onGoHome }) => {
-  const [activeTab, setActiveTab] = useState<ProfileTab>('HISTORY');
+export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, reviews, onSubmitReview, onGoHome, onPublishService }) => {
+  const [activeTab, setActiveTab] = useState<ProfileTab>(user.role === 'PROVIDER' ? 'SERVICES' : 'HISTORY');
   const [ratingInput, setRatingInput] = useState<number>(0);
   const [commentInput, setCommentInput] = useState('');
   const [selectedProId, setSelectedProId] = useState<string | null>(null);
@@ -25,6 +26,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, r
   
   // Get favorites
   const favoritePros = professionals.filter(p => (user.favorites || []).includes(p.id));
+
+  // Get user's own services (Mock logic: Assuming we filter by matching something, or for now just show all if mocked. 
+  // In real app, professional would have 'ownerId'. For this demo, we can just allow creation.)
+  // Let's assume for this demo that professionals created in this session are tracked or we just show the creation button.
+  // Ideally, Professional interface needs 'ownerId'. 
+  // For now, let's just show the "Create" button prominently.
 
   // Filter out pros that have already been reviewed by this user
   const pendingReviews = contactedPros.filter(p => !reviews.some(r => r.userId === user.id && r.professionalId === p.id));
@@ -46,11 +53,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, r
         {/* Sidebar Info */}
         <div className="w-full md:w-1/4">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center sticky top-24">
-             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold mx-auto mb-4">
+             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl font-bold mx-auto mb-4 border-4 border-white shadow-md">
                {user.name.charAt(0)}
              </div>
              <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-             <p className="text-slate-500 text-sm mb-6">{user.email}</p>
+             <p className="text-slate-500 text-sm mb-2">{user.email}</p>
+             <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-6 ${user.role === 'PROVIDER' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                 {user.role === 'PROVIDER' ? 'Cuenta Profesional' : 'Usuario Cliente'}
+             </span>
              
              <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
                 <div>
@@ -63,7 +73,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, r
                 </div>
              </div>
              
-             <button onClick={onGoHome} className="mt-6 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-sm">
+             <button onClick={onGoHome} className="mt-6 w-full py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 font-bold shadow-sm">
                Volver a Buscar
              </button>
           </div>
@@ -71,10 +81,26 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, r
 
         {/* Main Content */}
         <div className="w-full md:w-3/4 space-y-6">
+
+           {/* PROVIDER DASHBOARD HEADER */}
+           {user.role === 'PROVIDER' && (
+               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6">
+                   <div>
+                       <h2 className="text-2xl font-bold mb-2">Panel de Profesional</h2>
+                       <p className="text-blue-100 max-w-md">Gestiona tus servicios, actualiza tu información y llega a más clientes en Mendoza.</p>
+                   </div>
+                   <button 
+                    onClick={onPublishService}
+                    className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-md flex items-center gap-2 whitespace-nowrap transform hover:scale-105"
+                   >
+                       <Plus className="w-5 h-5" /> Publicar Nuevo Servicio
+                   </button>
+               </div>
+           )}
            
            {/* PENDING REVIEWS ALERT */}
            {pendingReviews.length > 0 && (
-             <div className="bg-amber-50 rounded-xl border border-amber-200 p-6 mb-8">
+             <div className="bg-amber-50 rounded-xl border border-amber-200 p-6 mb-8 animate-in fade-in slide-in-from-top-4">
                 <h3 className="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
                   <Star className="w-5 h-5 fill-amber-600 text-amber-600" /> Calificaciones Pendientes
                 </h3>
@@ -122,28 +148,50 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, professionals, r
 
            {/* TABS */}
            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-               <div className="flex border-b border-slate-200">
+               <div className="flex border-b border-slate-200 overflow-x-auto">
+                   {user.role === 'PROVIDER' && (
+                       <button 
+                        onClick={() => setActiveTab('SERVICES')}
+                        className={`flex-1 py-4 px-2 text-sm font-bold flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'SERVICES' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                       >
+                           <Briefcase className="w-4 h-4" /> Mis Servicios
+                       </button>
+                   )}
                    <button 
                     onClick={() => setActiveTab('HISTORY')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 ${activeTab === 'HISTORY' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 px-2 text-sm font-bold flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'HISTORY' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500 hover:bg-slate-50'}`}
                    >
                        <History className="w-4 h-4" /> Historial
                    </button>
                    <button 
                     onClick={() => setActiveTab('FAVORITES')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 ${activeTab === 'FAVORITES' ? 'text-red-600 border-b-2 border-red-600 bg-red-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 px-2 text-sm font-bold flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'FAVORITES' ? 'text-red-600 border-b-2 border-red-600 bg-red-50' : 'text-slate-500 hover:bg-slate-50'}`}
                    >
-                       <Heart className="w-4 h-4" /> Favoritos ({favoritePros.length})
+                       <Heart className="w-4 h-4" /> Favoritos <span className="ml-1 bg-slate-100 px-2 rounded-full text-xs">{favoritePros.length}</span>
                    </button>
                    <button 
                     onClick={() => setActiveTab('REVIEWS')}
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 ${activeTab === 'REVIEWS' ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 px-2 text-sm font-bold flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'REVIEWS' ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50' : 'text-slate-500 hover:bg-slate-50'}`}
                    >
                        <Star className="w-4 h-4" /> Mis Reseñas
                    </button>
                </div>
 
                <div className="p-6">
+                    {/* SERVICES TAB (PROVIDER ONLY) */}
+                    {activeTab === 'SERVICES' && user.role === 'PROVIDER' && (
+                        <div>
+                             <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                                 <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                                 <h3 className="text-lg font-bold text-slate-700">Gestiona tus Publicaciones</h3>
+                                 <p className="text-slate-500 mb-6 max-w-md mx-auto">Aquí aparecerán tus servicios activos. Actualmente usamos un sistema unificado, por lo que verás tus publicaciones en el buscador general.</p>
+                                 <button onClick={onPublishService} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">
+                                     Crear Nueva Publicación
+                                 </button>
+                             </div>
+                        </div>
+                    )}
+
                     {/* HISTORY TAB */}
                     {activeTab === 'HISTORY' && (
                         <div>
