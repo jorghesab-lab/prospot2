@@ -16,7 +16,7 @@ import { getIntelligentRecommendations } from './services/geminiService';
 import { supabase } from './services/supabase';
 
 // Change this version string whenever you update MOCK data in constants.ts to force a client refresh
-const DATA_VERSION = 'v3-mendoza-full-launch'; 
+const DATA_VERSION = 'v4-ai-unlocked'; 
 
 const App: React.FC = () => {
   // --- AUTH STATE ---
@@ -212,38 +212,36 @@ const App: React.FC = () => {
   };
 
   const handleNearMe = () => {
-    requireAuth(() => {
-        setIsLocating(true);
-        if (!navigator.geolocation) {
+      // Unlocked for everyone (Search is free)
+      setIsLocating(true);
+      if (!navigator.geolocation) {
+        setIsLocating(false);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
           setIsLocating(false);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-            setIsLocating(false);
-            setSelectedDepartment('Todos');
-          },
-          (error) => { console.error(error); setIsLocating(false); }
-        );
-    });
+          setSelectedDepartment('Todos');
+        },
+        (error) => { console.error(error); setIsLocating(false); }
+      );
   };
 
   const handleAiSearch = async () => {
+    // Unlocked for everyone (Search is free)
     if (!searchQuery.trim()) return;
-    requireAuth(async () => {
-        setIsAiLoading(true);
-        try {
-          const recommendation = await getIntelligentRecommendations(searchQuery);
-          if (recommendation) {
-            if (recommendation.targetCategory !== 'Unknown' && Object.values(Category).includes(recommendation.targetCategory as Category)) {
-                 setSelectedCategory(recommendation.targetCategory as Category);
-            }
-            setAiReasoning(recommendation.reasoning);
-          }
-        } catch (error) { console.error("AI Error", error); } 
-        finally { setIsAiLoading(false); }
-    });
+    setIsAiLoading(true);
+    try {
+      const recommendation = await getIntelligentRecommendations(searchQuery);
+      if (recommendation) {
+        if (recommendation.targetCategory !== 'Unknown' && Object.values(Category).includes(recommendation.targetCategory as Category)) {
+             setSelectedCategory(recommendation.targetCategory as Category);
+        }
+        setAiReasoning(recommendation.reasoning);
+      }
+    } catch (error) { console.error("AI Error", error); } 
+    finally { setIsAiLoading(false); }
   };
 
   // --- CRUD OPERATIONS ---
@@ -417,7 +415,7 @@ const App: React.FC = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-                        onClick={() => requireAuth(() => {})} 
+                        // Search unlocked, removed click handler that required auth
                     />
                 </div>
                 <div className="flex gap-2">
@@ -443,36 +441,27 @@ const App: React.FC = () => {
             </aside>
 
             <section className="lg:col-span-9 xl:col-span-8">
-                {(!currentUser && !isAdmin) ? (
-                    <div className="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm mt-8">
-                        <Lock className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Regístrate para ver los resultados</h2>
-                        <p className="text-slate-500 mb-6 max-w-md mx-auto">Protegemos la información de nuestra comunidad. Ingresa gratis para ver contactos, usar el mapa y calificar.</p>
-                        <div className="flex justify-center gap-4">
-                            <button onClick={() => { setAuthMode('LOGIN'); setIsAuthModalOpen(true); }} className="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold">Ingresar</button>
-                            <button onClick={() => { setAuthMode('REGISTER_USER'); setIsAuthModalOpen(true); }} className="text-blue-600 font-bold hover:underline">Crear cuenta</button>
-                        </div>
+                {/* REMOVED LOCK SCREEN - Search results are always visible */}
+                <>
+                    <div className="lg:hidden space-y-4 mb-6">
+                        <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
                     </div>
-                ) : (
-                    <>
-                        <div className="lg:hidden space-y-4 mb-6">
-                            <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
-                            {filteredPros.map((pro, index) => (
-                                <React.Fragment key={pro.id}>
-                                    <ServiceCard 
-                                        professional={pro} 
-                                        distance={userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, pro.latitude, pro.longitude) : null}
-                                        isAdmin={isAdmin}
-                                        onContact={handleContactProfessional}
-                                    />
-                                    {index === 2 && (ads.filter(a => a.position === 'feed')[0]) && <AdCard ad={ads.filter(a => a.position === 'feed')[0]} isAdmin={isAdmin} />}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </>
-                )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
+                        {filteredPros.map((pro, index) => (
+                            <React.Fragment key={pro.id}>
+                                <ServiceCard 
+                                    professional={pro} 
+                                    distance={userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, pro.latitude, pro.longitude) : null}
+                                    isAdmin={isAdmin}
+                                    onContact={() => requireAuth(() => handleContactProfessional(pro.id))} // Block Contact
+                                    isAuthenticated={!!currentUser || isAdmin} // Pass auth state to card to hide address/map
+                                    onRequireAuth={() => requireAuth(() => {})} // Pass auth trigger
+                                />
+                                {index === 2 && (ads.filter(a => a.position === 'feed')[0]) && <AdCard ad={ads.filter(a => a.position === 'feed')[0]} isAdmin={isAdmin} />}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </>
             </section>
 
             <aside className="hidden xl:block xl:col-span-2 space-y-6">
