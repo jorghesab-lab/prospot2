@@ -10,15 +10,15 @@ export const DEPARTMENTS = [
 
 export const CATEGORIES = Object.values(Category);
 
-// --- IMÁGENES POR DEFECTO POR CATEGORÍA ---
+// --- IMÁGENES POR DEFECTO POR CATEGORÍA (ENLACES ACTUALIZADOS) ---
 export const CATEGORY_DEFAULT_IMAGES: Record<Category, string> = {
-  [Category.HOME_REPAIR]: 'https://images.unsplash.com/photo-1581094794329-cd11179a28fa?auto=format&fit=crop&q=80&w=600', // Tools/Repair
-  [Category.AUTOMOTIVE]: 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80&w=600', // Mechanic
-  [Category.TECHNOLOGY]: 'https://images.unsplash.com/photo-1531297461136-8208b50b6614?auto=format&fit=crop&q=80&w=600', // Tech/Computer
-  [Category.BUSINESS]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600', // Office
-  [Category.HEALTH]: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600', // Health/Medical
-  [Category.EDUCATION]: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600', // Books/Education
-  [Category.EVENTS]: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=600', // Event/Party
+  [Category.HOME_REPAIR]: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=600', // Repair/Tools
+  [Category.AUTOMOTIVE]: 'https://images.unsplash.com/photo-1486262715619-01b80250e0dc?auto=format&fit=crop&q=80&w=600', // Mechanic
+  [Category.TECHNOLOGY]: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600', // Computer
+  [Category.BUSINESS]: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=600', // Business/Papers
+  [Category.HEALTH]: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600', // Medical
+  [Category.EDUCATION]: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600', // Education/Class
+  [Category.EVENTS]: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=600', // Events/Lights
   [Category.ALL]: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=600' // Generic
 };
 
@@ -39,7 +39,7 @@ export const MOCK_ADS: Advertisement[] = [
     id: 'ad-feed-1',
     title: 'Materiales de Construcción al Mejor Precio',
     advertiserName: 'Corralón El Constructor',
-    imageUrl: 'https://images.unsplash.com/photo-1581094794329-cd11179a28fa?auto=format&fit=crop&q=80&w=500',
+    imageUrl: 'https://images.unsplash.com/photo-1535732759880-bbd5c7265e3f?auto=format&fit=crop&q=80&w=500',
     linkUrl: '#',
     position: 'feed'
   }

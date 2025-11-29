@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Star, MapPin, CheckCircle, Clock, Map, Pencil, Trash2 } from 'lucide-react';
+import { Star, MapPin, CheckCircle, Clock, Map, Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { Professional } from '../types';
 
 interface ServiceCardProps {
@@ -58,6 +58,9 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
           src={professional.imageUrl} 
           alt={professional.name} 
           className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/600x400/f1f5f9/64748b?text=Imagen+No+Disponible';
+          }}
         />
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-slate-700 shadow-sm border border-slate-100 mt-6 md:mt-0">
           {professional.priceRange}
@@ -126,8 +129,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ professional, distance
                 <Map className="w-4 h-4" />
                 Ver Mapa
              </button>
-             <button onClick={handleContact} className="w-full bg-blue-600 border border-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm shadow-sm">
-               Contactar
+             <button onClick={handleContact} className="w-full bg-blue-600 border border-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm shadow-sm flex items-center justify-center gap-1">
+               <MessageSquare className="w-4 h-4" /> Contactar
              </button>
           </div>
         </div>
