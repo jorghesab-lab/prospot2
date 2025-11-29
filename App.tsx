@@ -487,6 +487,17 @@ const App: React.FC = () => {
                 {/* REMOVED LOCK SCREEN - Search results are always visible */}
                 <>
                     <div className="lg:hidden space-y-4 mb-6">
+                        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Filtrar por Zona</label>
+                            <select 
+                                value={selectedDepartment} 
+                                onChange={(e) => setSelectedDepartment(e.target.value)} 
+                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="Todos">Todos los Departamentos</option>
+                                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                        </div>
                         <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
