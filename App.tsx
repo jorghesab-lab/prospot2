@@ -15,6 +15,9 @@ import { Search, Sparkles, Filter, AlertCircle, MapPin, Wand2, ArrowRight, Shiel
 import { getIntelligentRecommendations } from './services/geminiService';
 import { supabase } from './services/supabase';
 
+// Change this version string whenever you update MOCK data in constants.ts to force a client refresh
+const DATA_VERSION = 'v3-mendoza-full-launch'; 
+
 const App: React.FC = () => {
   // --- AUTH STATE ---
   const [isAdmin, setIsAdmin] = useState(false);
@@ -36,7 +39,20 @@ const App: React.FC = () => {
   // --- DATA LOADING ---
   useEffect(() => {
     const loadData = async () => {
-      // 1. Load Admin Password & Users
+      // 0. CHECK DATA VERSION (Force Refresh Logic)
+      const currentVersion = localStorage.getItem('prospot_data_version');
+      let shouldForceReload = false;
+
+      if (currentVersion !== DATA_VERSION) {
+          console.log("Nueva versión detectada. Actualizando directorio...");
+          // We clear content data, but keep user accounts/auth
+          localStorage.removeItem('prospot_professionals');
+          localStorage.removeItem('prospot_ads');
+          localStorage.setItem('prospot_data_version', DATA_VERSION);
+          shouldForceReload = true;
+      }
+
+      // 1. Load Auth/User Data (Persisted)
       const savedPass = localStorage.getItem('prospot_admin_pass');
       if (savedPass) setAdminPassword(savedPass);
 
@@ -47,35 +63,50 @@ const App: React.FC = () => {
       if (savedReviews) setReviews(JSON.parse(savedReviews));
 
       // 2. Load Services/Ads (Hybrid)
-      if (supabase) {
+      if (supabase && !shouldForceReload) {
+          // If we have supabase connection and didn't just force a reset
           try {
               const { data: prosData } = await supabase.from('professionals').select('*');
               const { data: adsData } = await supabase.from('ads').select('*');
-              if (prosData) setProfessionals(fixImages(prosData as Professional[]));
-              else loadLocalData('pros');
-              if (adsData) setAds(adsData as Advertisement[]);
-              else loadLocalData('ads');
+              
+              if (prosData && prosData.length > 0) {
+                  setProfessionals(fixImages(prosData as Professional[]));
+              } else {
+                  loadLocalData('pros');
+              }
+
+              if (adsData && adsData.length > 0) {
+                  setAds(adsData as Advertisement[]);
+              } else {
+                  loadLocalData('ads');
+              }
               return;
           } catch (err) { console.error("Error conectando a Supabase:", err); }
       }
-      loadLocalData('all');
+      
+      // Fallback to local data (or if forced reload)
+      loadLocalData('all', shouldForceReload);
     };
 
-    const loadLocalData = (type: 'pros' | 'ads' | 'all') => {
+    const loadLocalData = (type: 'pros' | 'ads' | 'all', forceReset = false) => {
         if (type === 'pros' || type === 'all') {
             const localPros = localStorage.getItem('prospot_professionals');
-            if (localPros) {
+            if (localPros && !forceReset) {
                 const parsed = JSON.parse(localPros);
                 if (Array.isArray(parsed) && parsed.length > 0) setProfessionals(fixImages(parsed));
                 else setProfessionals(MOCK_PROFESSIONALS);
-            } else setProfessionals(MOCK_PROFESSIONALS);
+            } else {
+                setProfessionals(MOCK_PROFESSIONALS); // Load new Mendoza data
+            }
         }
         if (type === 'ads' || type === 'all') {
             const localAds = localStorage.getItem('prospot_ads');
-            if (localAds) {
+            if (localAds && !forceReset) {
                 const parsed = JSON.parse(localAds);
                 setAds(Array.isArray(parsed) ? parsed : MOCK_ADS);
-            } else setAds(MOCK_ADS);
+            } else {
+                setAds(MOCK_ADS); // Load new Ads
+            }
         }
     };
     loadData();
@@ -83,7 +114,7 @@ const App: React.FC = () => {
 
   const fixImages = (pros: Professional[]): Professional[] => {
       return pros.map(p => {
-          if (p.imageUrl && (p.imageUrl.includes('picsum.photos') || p.imageUrl.includes('placehold.co'))) {
+          if (!p.imageUrl || p.imageUrl.includes('picsum.photos') || p.imageUrl.includes('placehold.co')) {
               return { ...p, imageUrl: CATEGORY_DEFAULT_IMAGES[p.category] || CATEGORY_DEFAULT_IMAGES[Category.ALL] };
           }
           return p;
