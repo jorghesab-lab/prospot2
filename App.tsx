@@ -66,6 +66,8 @@ const App: React.FC = () => {
       const sessionUser = localStorage.getItem('prospot_current_session');
       if (sessionUser) {
           setCurrentUser(JSON.parse(sessionUser));
+          // CRITICAL CHANGE: If session exists, go straight to Search/Home
+          setViewMode('HOME');
       }
 
       // 2. Load Services/Ads (Hybrid)
@@ -181,8 +183,9 @@ const App: React.FC = () => {
     setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
     
-    if (finalUser.role === 'PROVIDER') setViewMode('USER_PROFILE'); 
-    else setViewMode('HOME');
+    // CRITICAL CHANGE: Always go to HOME (Exploration) after login, 
+    // regardless of role. Providers can access dashboard via Header/Profile.
+    setViewMode('HOME');
   };
 
   const handleLogout = () => {
