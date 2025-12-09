@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { User, UserRole, AuthMode } from '../types';
 import { Mail, Lock, User as UserIcon, Briefcase, Phone, MapPin, X, ArrowRight, Chrome } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 interface AuthModalProps {
   onLogin: (user: User) => void;
@@ -14,6 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
   // If it's REGISTER_PROVIDER, we show the provider form.
   const [isProviderMode, setIsProviderMode] = useState(initialMode === 'REGISTER_PROVIDER');
   const [isLoginMode, setIsLoginMode] = useState(initialMode === 'LOGIN');
+  const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -23,30 +25,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
     address: ''
   });
 
-  const handleGoogleLogin = () => {
-    // SIMULACIÓN DE RESPUESTA DE GOOGLE
-    // En producción, esto vendría de `result.user` de Supabase o Firebase Auth.
-    const googleUser: User = {
-        id: 'google-user-demo',
-        name: 'Juan Martín Pérez', // Nombre que vendría de la cuenta de Google
-        email: 'juan.perez@gmail.com',
-        role: 'USER',
-        createdAt: new Date().toISOString(),
-        contactHistory: [],
-        favorites: [],
-        // Foto de perfil simulada (como la que devuelve Google)
-        photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200'
-    };
-    onLogin(googleUser);
-    onClose();
+  const handleGoogleLogin = async () => {
+    // LOGIN REAL CON GOOGLE + SUPABASE
+    if (!supabase) {
+        alert("La conexión con la base de datos no está configurada. (Faltan variables de entorno)");
+        return;
+    }
+
+    try {
+        setIsLoading(true);
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // Redirige a la misma página después del login
+                redirectTo: window.location.origin 
+            }
+        });
+        if (error) throw error;
+        // El usuario será redirigido a Google, por lo que el código se detiene aquí hasta que vuelve.
+    } catch (error: any) {
+        alert("Error iniciando sesión con Google: " + error.message);
+        setIsLoading(false);
+    }
   };
 
   const handleProviderSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, if isLoginMode is true, we would verify password here.
-    // For now we simulate success.
-    
+    // Simulación para proveedores (se mantiene igual por ahora, o se podría conectar a Supabase Auth email/password)
     const user: User = {
       id: isLoginMode ? 'provider-existing-id' : Date.now().toString(),
       name: formData.name || 'Profesional Registrado',
@@ -114,10 +120,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
                     
                     <button 
                         onClick={handleGoogleLogin}
-                        className="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
+                        disabled={isLoading}
+                        className="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-3 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
-                        Continuar con Google
+                        {isLoading ? (
+                            <span className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></span>
+                        ) : (
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
+                        )}
+                        {isLoading ? 'Conectando...' : 'Continuar con Google'}
                     </button>
                     
                     <p className="text-xs text-slate-400 mt-4">

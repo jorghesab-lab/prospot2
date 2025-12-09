@@ -37,6 +37,47 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('LOGIN');
 
+  // --- AUTH LISTENERS (GOOGLE LOGIN) ---
+  useEffect(() => {
+    if (!supabase) return;
+
+    // 1. Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+         handleSupabaseUser(session.user);
+      }
+    });
+
+    // 2. Listen for auth changes (Login, Logout, Google Redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        handleSupabaseUser(session.user);
+      } else if (_event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setViewMode('PROFESSIONALS_LANDING');
+        localStorage.removeItem('prospot_current_session');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSupabaseUser = (sbUser: any) => {
+      // Map Supabase User to App User
+      const appUser: User = {
+          id: sbUser.id,
+          name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || 'Usuario Google',
+          email: sbUser.email || '',
+          role: 'USER', // Default role for Google logins
+          createdAt: sbUser.created_at || new Date().toISOString(),
+          contactHistory: [],
+          favorites: [],
+          photoUrl: sbUser.user_metadata?.avatar_url || sbUser.user_metadata?.picture
+      };
+      
+      handleLogin(appUser);
+  };
+
   // --- DATA LOADING ---
   useEffect(() => {
     const loadData = async () => {
@@ -63,11 +104,11 @@ const App: React.FC = () => {
       const savedReviews = localStorage.getItem('prospot_reviews');
       if (savedReviews) setReviews(JSON.parse(savedReviews));
 
-      // NEW: Check for Active Session
+      // NEW: Check for Active Session (Local Storage Fallback if Supabase fails or not used)
+      // Note: Supabase listener above will override this if a session exists.
       const sessionUser = localStorage.getItem('prospot_current_session');
-      if (sessionUser) {
+      if (sessionUser && !currentUser) { // Only set if not already set by Supabase
           setCurrentUser(JSON.parse(sessionUser));
-          // CRITICAL CHANGE: If session exists, go straight to Search/Home
           setViewMode('HOME');
       }
 
@@ -182,6 +223,7 @@ const App: React.FC = () => {
             ...existingUser,
             name: user.name || existingUser.name, // Prefer new name from login
             photoUrl: user.photoUrl || existingUser.photoUrl, // Prefer new photo from login
+            id: user.id // Ensure we keep the Supabase ID if it matches email
         };
         
         // Update the user in the main list
@@ -200,7 +242,8 @@ const App: React.FC = () => {
     setViewMode('HOME');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
     setCurrentUser(null);
     setIsAdmin(false);
     setViewMode('PROFESSIONALS_LANDING'); 
