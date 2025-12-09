@@ -24,17 +24,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLogin, onClose, initialM
   });
 
   const handleGoogleLogin = () => {
-    // Simulate Google Login
-    const name = 'Usuario Google';
+    // SIMULACIÓN DE RESPUESTA DE GOOGLE
+    // En producción, esto vendría de `result.user` de Supabase o Firebase Auth.
     const googleUser: User = {
-        id: 'google-' + Date.now(),
-        name: name, 
-        email: 'usuario@gmail.com',
+        id: 'google-user-demo',
+        name: 'Juan Martín Pérez', // Nombre que vendría de la cuenta de Google
+        email: 'juan.perez@gmail.com',
         role: 'USER',
         createdAt: new Date().toISOString(),
         contactHistory: [],
         favorites: [],
-        photoUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff`
+        // Foto de perfil simulada (como la que devuelve Google)
+        photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200'
     };
     onLogin(googleUser);
     onClose();

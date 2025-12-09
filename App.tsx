@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { CategoryFilter } from './components/CategoryFilter';
@@ -166,20 +167,31 @@ const App: React.FC = () => {
 
   // --- AUTH ACTIONS ---
   const handleLogin = (user: User) => {
-    // Check if user exists in our "DB", if not add them
+    // Check if user exists in our "DB"
     const existingIndex = users.findIndex(u => u.email === user.email);
     let finalUser = user;
     
     if (existingIndex === -1) {
+        // New user
         setUsers(prev => [...prev, user]);
     } else {
-        // If exists, load their full profile (history, id, etc)
-        finalUser = users[existingIndex];
-        // Ensure favorites array exists for old users
-        if (!finalUser.favorites) finalUser.favorites = [];
-        // Ensure photo exists if google user
-        if (user.photoUrl && !finalUser.photoUrl) finalUser.photoUrl = user.photoUrl;
+        // User exists: Merge local history/favorites with incoming data (Name/Photo)
+        // This ensures if I log in with Google, my new Google Photo updates my ProSpot profile.
+        const existingUser = users[existingIndex];
+        finalUser = {
+            ...existingUser,
+            name: user.name || existingUser.name, // Prefer new name from login
+            photoUrl: user.photoUrl || existingUser.photoUrl, // Prefer new photo from login
+        };
+        
+        // Update the user in the main list
+        setUsers(prev => {
+            const newUsers = [...prev];
+            newUsers[existingIndex] = finalUser;
+            return newUsers;
+        });
     }
+
     setCurrentUser(finalUser);
     setIsAuthModalOpen(false);
     
